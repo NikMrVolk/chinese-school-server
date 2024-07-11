@@ -186,9 +186,9 @@ model Tariff {
     quantityHours       Int      @map("quantity_hours")
     benefits            String[]
     quantityWeeksActive Int      @map("quantity_weeks_active")
-    isResceduleLessons  Boolean  @map("is_rescedule_lessons")
-    isPopular           Boolean  @map("is_popular")
-    isDeleted           Boolean  @map("is_deleted")
+    isRescheduleLessons Boolean  @map("is_rescedule_lessons")
+    isPopular           Boolean  @default(false) @map("is_popular")
+    isDeleted           Boolean  @default(false) @map("is_deleted")
 
     PurchasedTariff PurchasedTariff[]
 
