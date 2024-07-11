@@ -3,7 +3,7 @@ import { BadRequestException, Injectable, NotFoundException, UnauthorizedExcepti
 import { JwtService } from '@nestjs/jwt'
 import { Response } from 'express'
 import { AuthDto } from './dto/auth.dto'
-import { UserService } from './user.service'
+import { UserService } from '../user/user.service'
 import * as bcrypt from 'bcrypt'
 
 @Injectable()

@@ -1,7 +1,6 @@
 import {
     Body,
     Controller,
-    Get,
     HttpCode,
     Post,
     Req,
@@ -12,16 +11,11 @@ import {
 } from '@nestjs/common'
 import { Request, Response } from 'express'
 import { AuthService } from './auth.service'
-import { Auth } from './decorators/auth.decorator'
 import { AuthDto } from './dto/auth.dto'
-import { UserService } from './user.service'
 
 @Controller('auth')
 export class AuthController {
-    constructor(
-        private readonly authService: AuthService,
-        private readonly userService: UserService
-    ) {}
+    constructor(private readonly authService: AuthService) {}
 
     @UsePipes(new ValidationPipe())
     @HttpCode(200)
@@ -66,12 +60,5 @@ export class AuthController {
         this.authService.removeRefreshTokenFromResponse(res)
 
         return true
-    }
-
-    @HttpCode(200)
-    @Auth()
-    @Get('users')
-    async getList() {
-        return this.userService.getUsers()
     }
 }
