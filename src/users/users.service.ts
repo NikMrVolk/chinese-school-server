@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import * as bcrypt from 'bcrypt'
 import { PrismaService } from 'src/prisma.service'
-import { RegistrationDto } from '../auth/dto/registration.dto'
+import { RegistrationDto, RegistrationStudentDto } from '../auth/dto/registration.dto'
 import { Role, User } from '@prisma/client'
 import { generateRandomPassword } from 'src/utils/helpers'
 
@@ -119,6 +119,58 @@ export class UsersService {
                         telegram: true,
                         avatar: true,
                         birthday: true,
+                    },
+                },
+                student: {
+                    select: {
+                        packageTitle: true,
+                    },
+                },
+            },
+        })
+    }
+    async createStudent(dto: RegistrationStudentDto) {
+        const password = generateRandomPassword(12, 15)
+
+        return this.prisma.user.create({
+            data: {
+                email: dto.email,
+                password: await bcrypt.hash(password, 7),
+                profile: {
+                    create: {
+                        name: dto.name,
+                        surname: dto.surname,
+                        patronymic: dto.patronymic,
+                        phone: dto.phone,
+                        telegram: dto.telegram,
+                        avatar: dto.avatar,
+                        birthday: dto.birthday,
+                    },
+                },
+                student: {
+                    create: {
+                        packageTitle: dto.packageTitle,
+                    },
+                },
+            },
+            select: {
+                email: true,
+                id: true,
+                password: true,
+                profile: {
+                    select: {
+                        name: true,
+                        surname: true,
+                        patronymic: true,
+                        phone: true,
+                        telegram: true,
+                        avatar: true,
+                        birthday: true,
+                    },
+                },
+                student: {
+                    select: {
+                        packageTitle: true,
                     },
                 },
             },

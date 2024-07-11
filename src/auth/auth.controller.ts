@@ -38,6 +38,15 @@ export class AuthController {
         return response
     }
 
+    @UsePipes(new ValidationPipe())
+    @HttpCode(200)
+    @Post('registration/payment')
+    async studentRegistrationPayment(@Body() dto: RegistrationDto, @Res({ passthrough: true }) res: Response) {
+        const { refreshToken, ...response } = await this.authService.register(dto)
+        this.authService.addRefreshTokenToResponse(res, refreshToken)
+        return response
+    }
+
     @HttpCode(200)
     @Post('login/access-token')
     async getNewTokens(@Req() req: Request, @Res({ passthrough: true }) res: Response) {

@@ -1,5 +1,5 @@
 import { Role } from '@prisma/client'
-import { IsEmail, IsEnum } from 'class-validator'
+import { IsEmail, IsEnum, IsString } from 'class-validator'
 import { ProfileDto } from './profile.dto'
 
 export class RegistrationDto extends ProfileDto {
@@ -8,4 +8,12 @@ export class RegistrationDto extends ProfileDto {
 
     @IsEnum(Role)
     role: Role
+}
+
+export class RegistrationStudentDto extends RegistrationDto {
+    @IsString()
+    packageTitle: string
+
+    @IsString()
+    paymentLink: string
 }

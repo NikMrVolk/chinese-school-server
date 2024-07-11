@@ -33,6 +33,12 @@ enum LessonStatus {
     NOT_CONFIRMED
 }
 
+enum PaymentStatus {
+    SUCCESS
+    UN_SUCCESS
+    IN_PROCESS
+}
+
 model User {
     id        Int      @id @default(autoincrement())
     createdAt DateTime @default(now()) @map("created_at")
@@ -44,7 +50,7 @@ model User {
     role Role @default(STUDENT)
 
     profile Profile?
-    Student Student?
+    student Student?
     teacher Teacher?
 
     otps          Otp[]
@@ -156,7 +162,6 @@ model Student {
     updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
     packageTitle String? @map("package_title")
-    paymentLink  String? @map("payment_link")
 
     purchasedTariffs PurchasedTariff[]
     lessons          Lesson[]
@@ -195,8 +200,11 @@ model PurchasedTariff {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-    startedAt      DateTime @map("started_at")
-    completedHours Int      @map("completed_hours")
+    startedAt      DateTime? @map("started_at")
+    completedHours Int       @map("completed_hours")
+    paymentLink    String    @map("payment_link")
+
+    paymentStatus PaymentStatus @map("payment_status")
 
     tariffId  Int     @map("tariff_id")
     Tariff    Tariff  @relation(map: "tariff", fields: [tariffId], references: [id])
