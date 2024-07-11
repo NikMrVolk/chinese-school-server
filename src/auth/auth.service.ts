@@ -1,10 +1,10 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { Response } from 'express'
-import { AuthDto } from './dto/auth.dto'
 import * as bcrypt from 'bcrypt'
 import { UsersService } from 'src/users/users.service'
+import { LoginDto } from './dto/login.dto'
+import { RegistrationDto } from './dto/registration.dto'
 
 @Injectable()
 export class AuthService {
@@ -16,7 +16,7 @@ export class AuthService {
         private usersService: UsersService
     ) {}
 
-    async login(dto: AuthDto) {
+    async login(dto: LoginDto) {
         const { password, ...user } = await this.validateUser(dto)
         const tokens = await this.issueTokens(user.id)
 
@@ -26,18 +26,18 @@ export class AuthService {
         }
     }
 
-    async register(dto: AuthDto) {
+    async register(dto: RegistrationDto) {
         const oldUser = await this.usersService.getByEmail(dto.email)
 
-        if (oldUser) throw new BadRequestException('User already exists')
+        if (oldUser) throw new BadRequestException(`Пользователь с почтой ${dto.email} уже существует`)
 
         const { password, ...user } = await this.usersService.create(dto)
 
-        const tokens = await this.issueTokens(user.id)
+        const { refreshToken } = await this.issueTokens(user.id)
 
         return {
             user,
-            ...tokens,
+            refreshToken,
         }
     }
 
@@ -69,14 +69,14 @@ export class AuthService {
         return { accessToken, refreshToken }
     }
 
-    private async validateUser(dto: AuthDto) {
+    private async validateUser(dto: LoginDto) {
         const user = await this.usersService.getByEmail(dto.email)
 
-        if (!user) throw new NotFoundException('User not found')
+        if (!user) throw new NotFoundException('Не верный логин или пароль')
 
         const isValid = await bcrypt.compare(dto.password, user.password)
 
-        if (!isValid) throw new UnauthorizedException('Invalid password')
+        if (!isValid) throw new UnauthorizedException('Не верный логин или пароль')
 
         return user
     }

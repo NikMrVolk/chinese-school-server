@@ -32,5 +32,17 @@ module.exports = {
                 endOfLine: 'lf',
             },
         ],
+        '@typescript-eslint/no-unused-vars': [
+            'error',
+            {
+                args: 'all',
+                argsIgnorePattern: '^_',
+                caughtErrors: 'all',
+                caughtErrorsIgnorePattern: '^_',
+                destructuredArrayIgnorePattern: '^_',
+                varsIgnorePattern: '^(password|_)',
+                ignoreRestSiblings: true,
+            },
+        ],
     },
 }
