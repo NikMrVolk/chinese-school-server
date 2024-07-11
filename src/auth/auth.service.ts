@@ -3,8 +3,8 @@ import { BadRequestException, Injectable, NotFoundException, UnauthorizedExcepti
 import { JwtService } from '@nestjs/jwt'
 import { Response } from 'express'
 import { AuthDto } from './dto/auth.dto'
-import { UserService } from '../user/user.service'
 import * as bcrypt from 'bcrypt'
+import { UsersService } from 'src/users/users.service'
 
 @Injectable()
 export class AuthService {
@@ -13,7 +13,7 @@ export class AuthService {
 
     constructor(
         private jwt: JwtService,
-        private userService: UserService
+        private usersService: UsersService
     ) {}
 
     async login(dto: AuthDto) {
@@ -27,11 +27,11 @@ export class AuthService {
     }
 
     async register(dto: AuthDto) {
-        const oldUser = await this.userService.getByEmail(dto.email)
+        const oldUser = await this.usersService.getByEmail(dto.email)
 
         if (oldUser) throw new BadRequestException('User already exists')
 
-        const { password, ...user } = await this.userService.create(dto)
+        const { password, ...user } = await this.usersService.create(dto)
 
         const tokens = await this.issueTokens(user.id)
 
@@ -45,7 +45,7 @@ export class AuthService {
         const result = await this.jwt.verifyAsync(refreshToken)
         if (!result) throw new UnauthorizedException('Invalid refresh token')
 
-        const { password, ...user } = await this.userService.getById(result.id)
+        const { password, ...user } = await this.usersService.getById(result.id)
 
         const tokens = await this.issueTokens(user.id)
 
@@ -70,7 +70,7 @@ export class AuthService {
     }
 
     private async validateUser(dto: AuthDto) {
-        const user = await this.userService.getByEmail(dto.email)
+        const user = await this.usersService.getByEmail(dto.email)
 
         if (!user) throw new NotFoundException('User not found')
 

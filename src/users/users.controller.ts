@@ -1,7 +1,7 @@
 import { Controller, Get, HttpCode, Param } from '@nestjs/common'
 
 @Controller('users')
-export class UserController {
+export class UsersController {
     constructor() {}
 
     @HttpCode(200)
