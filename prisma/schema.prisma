@@ -7,9 +7,256 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+enum Role {
+    STUDENT
+    TEACHER
+    ADMIN
+}
+
+enum LanguageLevel {
+    HSK_1
+    HSK_2
+    HSK_3
+    HSK_4
+    HSK_5
+    HSK_6
+    HSK_7
+    HSK_8
+    HSK_9
+}
+
+enum LessonStatus {
+    ALL_SUCCESS
+    STUDENT_SUCCESS
+    UN_SUCCESS
+    START_SOON
+    NOT_CONFIRMED
+}
+
 model User {
-    id       Int     @id @default(autoincrement())
-    email    String  @unique
-    name     String?
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    email    String @unique
     password String
+
+    role Role @default(STUDENT)
+
+    profile Profile?
+    Student Student?
+    teacher Teacher?
+
+    otps          Otp[]
+    passwordReset PasswordReset[]
+    session       Session[]
+
+    @@map("users")
+}
+
+model Session {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    refreshToken String @map("refresh_token")
+    expiredIn    Int    @map("expired_in")
+
+    userId Int  @map("user_id")
+    User   User @relation(map: "user", fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("sessions")
+}
+
+model Otp {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    code     String
+    attempts Int
+
+    userId Int  @map("user_id")
+    User   User @relation(map: "user", fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("otps")
+}
+
+model PasswordReset {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    newPassword String @map("new_password")
+    attempts    Int
+
+    userId Int  @map("user_id")
+    User   User @relation(map: "user", fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("password_resets")
+}
+
+model Profile {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    name       String?
+    surname    String?
+    patronymic String?
+    birthday   DateTime?
+    phone      String?
+    telegram   String?
+    avatar     String?
+
+    userId Int  @unique @map("user_id")
+    User   User @relation(map: "user", fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("profiles")
+}
+
+model Teacher {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    youtubeVideoId         String? @map("youtube_video_id")
+    youtubeVideoPreviewUrl String? @map("youtube_video_preview_url")
+    experience             Int
+
+    students  Student[]
+    notes     Note[]
+    lessons   Lesson[]
+    homeworks Homework[]
+    chats     Chat[]
+
+    userId Int  @unique @map("user_id")
+    User   User @relation(map: "user", fields: [userId], references: [id], onDelete: Cascade)
+
+    @@map("teachers")
+}
+
+model Note {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    text      String
+    studentId Int    @map("student_id")
+
+    teacherId Int?
+    Teacher   Teacher? @relation(map: "teacher", fields: [teacherId], references: [id], onDelete: Cascade)
+
+    @@map("notes")
+}
+
+model Student {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    packageTitle String? @map("package_title")
+    paymentLink  String? @map("payment_link")
+
+    purchasedTariffs PurchasedTariff[]
+    lessons          Lesson[]
+    homeworks        Homework[]
+    chat             Chat?
+
+    userId    Int      @unique @map("user_id")
+    user      User     @relation(map: "user", fields: [userId], references: [id], onDelete: Cascade)
+    teacherId Int?     @map("teacher_id")
+    Teacher   Teacher? @relation(map: "teacher", fields: [teacherId], references: [id])
+
+    @@map("students")
+}
+
+model Tariff {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    title               String
+    price               Int
+    quantityHours       Int      @map("quantity_hours")
+    benefits            String[]
+    quantityWeeksActive Int      @map("quantity_weeks_active")
+    isResceduleLessons  Boolean  @map("is_rescedule_lessons")
+    isPopular           Boolean  @map("is_popular")
+    isDeleted           Boolean  @map("is_deleted")
+
+    PurchasedTariff PurchasedTariff[]
+
+    @@map("tariffs")
+}
+
+model PurchasedTariff {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    startedAt      DateTime @map("started_at")
+    completedHours Int      @map("completed_hours")
+
+    tariffId  Int     @map("tariff_id")
+    Tariff    Tariff  @relation(map: "tariff", fields: [tariffId], references: [id])
+    studentId Int     @map("student_id")
+    Student   Student @relation(map: "student", fields: [studentId], references: [id])
+}
+
+model Homework {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    title   String
+    fileUrl String @map("file_url")
+
+    studentId Int     @map("student_id")
+    Student   Student @relation(map: "student", fields: [studentId], references: [id])
+    teacherId Int     @map("teacher_id")
+    Teacher   Teacher @relation(map: "teacher", fields: [teacherId], references: [id])
+}
+
+model Lesson {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    startDate DateTime @map("start_date")
+
+    lessonStatus LessonStatus @map("lesson_status")
+
+    teacherId Int     @map("teacher_id")
+    Teacher   Teacher @relation(map: "teacher", fields: [teacherId], references: [id])
+    studentId Int
+    Student   Student @relation(map: "student", fields: [studentId], references: [id])
+}
+
+model Chat {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    lastMessageTimestamp DateTime @map("last_message_timestamp")
+
+    message Message[]
+
+    studentId Int     @unique @map("student_id")
+    Student   Student @relation(map: "student", fields: [studentId], references: [id])
+    teacherId Int     @map("teacher_id")
+    Teacher   Teacher @relation(map: "teacher", fields: [teacherId], references: [id])
+}
+
+model Message {
+    id        Int      @id @default(autoincrement())
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    text      String?
+    fileUrl   String?  @map("file_url")
+    timestamp DateTime
+
+    chatId Int  @map("chat_id")
+    Chat   Chat @relation(map: "chat", fields: [chatId], references: [id], onDelete: Cascade)
 }
