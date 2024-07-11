@@ -68,14 +68,32 @@ export class UsersService {
             where: {
                 email,
             },
+            select: {
+                email: true,
+                id: true,
+                password: true,
+                profile: {
+                    select: {
+                        name: true,
+                        surname: true,
+                        patronymic: true,
+                        phone: true,
+                        telegram: true,
+                        avatar: true,
+                        birthday: true,
+                    },
+                },
+            },
         })
     }
 
     async create(dto: RegistrationDto) {
+        const password = generateRandomPassword(12, 15)
+
         return this.prisma.user.create({
             data: {
                 email: dto.email,
-                password: await bcrypt.hash(generateRandomPassword(12, 15), 7),
+                password: await bcrypt.hash(password, 7),
                 profile: {
                     create: {
                         name: dto.name,
