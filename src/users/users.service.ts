@@ -72,6 +72,7 @@ export class UsersService {
                 email: true,
                 id: true,
                 password: true,
+                role: true,
                 profile: {
                     select: {
                         name: true,
@@ -94,6 +95,7 @@ export class UsersService {
             data: {
                 email: dto.email,
                 password: await bcrypt.hash(password, 7),
+                role: dto.role,
                 profile: {
                     create: {
                         name: dto.name,
@@ -110,6 +112,7 @@ export class UsersService {
                 email: true,
                 id: true,
                 password: true,
+                role: true,
                 profile: {
                     select: {
                         name: true,

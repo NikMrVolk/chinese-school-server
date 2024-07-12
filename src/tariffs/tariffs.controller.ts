@@ -1,10 +1,10 @@
 import { BadRequestException, Body, Controller, HttpCode, Param, Patch, Post } from '@nestjs/common'
 import { tariffDto } from './dto/tariff.dto'
-import { Auth } from 'src/auth/decorators/auth.decorator'
 import { TariffsService } from './tariffs.service'
 import { Entity } from 'src/utils/types'
 import { Tariff } from '@prisma/client'
 import { EntityService } from '../utils/services/entity.service'
+import { Admin, Auth } from 'src/utils/decorators'
 
 @Auth()
 @Controller('tariffs')
@@ -22,6 +22,7 @@ export class TariffsController {
         return tariff
     }
 
+    @Admin()
     @HttpCode(200)
     @Patch(':id')
     async update(@Param('id') id: string, @Body() dto: tariffDto) {

@@ -5,6 +5,7 @@ import * as bcrypt from 'bcrypt'
 import { UsersService } from 'src/users/users.service'
 import { LoginDto } from './dto/login.dto'
 import { RegistrationDto } from './dto/registration.dto'
+import { Role } from '@prisma/client'
 
 @Injectable()
 export class AuthService {
@@ -18,7 +19,7 @@ export class AuthService {
 
     async login(dto: LoginDto) {
         const { password, ...user } = await this.validateUser(dto)
-        const tokens = await this.issueTokens(user.id)
+        const tokens = await this.issueTokens(user.id, user.role)
 
         return {
             user,
@@ -33,7 +34,7 @@ export class AuthService {
 
         const { password, ...user } = await this.usersService.create(dto)
 
-        const { refreshToken } = await this.issueTokens(user.id)
+        const { refreshToken } = await this.issueTokens(user.id, user.role)
 
         return {
             user,
@@ -47,7 +48,7 @@ export class AuthService {
 
         const { password, ...user } = await this.usersService.getById(result.id)
 
-        const tokens = await this.issueTokens(user.id)
+        const tokens = await this.issueTokens(user.id, user.role)
 
         return {
             user,
@@ -55,8 +56,8 @@ export class AuthService {
         }
     }
 
-    private async issueTokens(userId: number) {
-        const data = { id: userId }
+    private async issueTokens(userId: number, role: Role = Role.STUDENT) {
+        const data = { id: userId, role }
 
         const accessToken = this.jwt.sign(data, {
             expiresIn: '1h',

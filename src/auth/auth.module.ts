@@ -20,5 +20,6 @@ import { UsersModule } from 'src/users/users.module'
             useFactory: getJwtConfig,
         }),
     ],
+    exports: [],
 })
 export class AuthModule {}

@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { BadRequestException, Controller, Get, HttpCode, Param } from '@nestjs/common'
 import { UsersService } from './users.service'
-import { Auth } from 'src/auth/decorators/auth.decorator'
-import { CurrentUser } from 'src/auth/decorators/user.decorator'
+
 import { Role, User } from '@prisma/client'
+import { Auth, CurrentUser } from 'src/utils/decorators'
 
 @Controller('users')
 export class UsersController {
