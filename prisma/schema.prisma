@@ -168,6 +168,8 @@ model Student {
     homeworks        Homework[]
     chat             Chat?
 
+    languageLevel LanguageLevel @map("language_level")
+
     userId    Int      @unique @map("user_id")
     user      User     @relation(map: "user", fields: [userId], references: [id], onDelete: Cascade)
     teacherId Int?     @map("teacher_id")

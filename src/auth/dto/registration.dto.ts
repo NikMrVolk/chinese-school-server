@@ -1,4 +1,4 @@
-import { Role } from '@prisma/client'
+import { LanguageLevel, Role } from '@prisma/client'
 import { IsEmail, IsEnum, IsString } from 'class-validator'
 import { ProfileDto } from './profile.dto'
 
@@ -16,4 +16,7 @@ export class RegistrationStudentDto extends RegistrationDto {
 
     @IsString()
     paymentLink: string
+
+    @IsEnum(LanguageLevel)
+    languageLevel: LanguageLevel
 }

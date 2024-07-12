@@ -153,6 +153,7 @@ export class UsersService {
                 student: {
                     create: {
                         packageTitle: dto.packageTitle,
+                        languageLevel: dto.languageLevel,
                     },
                 },
             },
@@ -184,6 +185,43 @@ export class UsersService {
         return this.prisma.student.findMany({
             where: {
                 teacherId,
+            },
+        })
+    }
+
+    async getFullUserInfo(id: number) {
+        return this.prisma.user.findUnique({
+            where: {
+                id,
+            },
+            select: {
+                email: true,
+                id: true,
+                role: true,
+                profile: {
+                    select: {
+                        name: true,
+                        surname: true,
+                        patronymic: true,
+                        phone: true,
+                        telegram: true,
+                        avatar: true,
+                        birthday: true,
+                    },
+                },
+                student: {
+                    select: {
+                        packageTitle: true,
+                        languageLevel: true,
+                    },
+                },
+                teacher: {
+                    select: {
+                        youtubeVideoId: true,
+                        youtubeVideoPreviewUrl: true,
+                        experience: true,
+                    },
+                },
             },
         })
     }
