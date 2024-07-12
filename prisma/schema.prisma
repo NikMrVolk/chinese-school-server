@@ -129,6 +129,7 @@ model Teacher {
     youtubeVideoId         String? @map("youtube_video_id")
     youtubeVideoPreviewUrl String? @map("youtube_video_preview_url")
     experience             Int
+    description            String?
 
     students  Student[]
     notes     Note[]
