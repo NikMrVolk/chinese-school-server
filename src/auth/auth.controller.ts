@@ -1,14 +1,4 @@
-import {
-    Body,
-    Controller,
-    HttpCode,
-    Post,
-    Req,
-    Res,
-    UnauthorizedException,
-    UsePipes,
-    ValidationPipe,
-} from '@nestjs/common'
+import { Body, Controller, HttpCode, Post, Req, Res, UnauthorizedException } from '@nestjs/common'
 import { Request, Response } from 'express'
 import { AuthService } from './auth.service'
 import { LoginDto } from './dto/login.dto'
@@ -18,7 +8,6 @@ import { RegistrationDto } from './dto/registration.dto'
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
-    @UsePipes(new ValidationPipe())
     @HttpCode(200)
     @Post('login')
     async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
@@ -29,7 +18,6 @@ export class AuthController {
         return response
     }
 
-    @UsePipes(new ValidationPipe())
     @HttpCode(200)
     @Post('registration')
     async register(@Body() dto: RegistrationDto, @Res({ passthrough: true }) res: Response) {
@@ -38,7 +26,6 @@ export class AuthController {
         return response
     }
 
-    @UsePipes(new ValidationPipe())
     @HttpCode(200)
     @Post('registration/payment')
     async studentRegistrationPayment(@Body() dto: RegistrationDto, @Res({ passthrough: true }) res: Response) {

@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/prisma.service'
-import { tariffDto } from './dto/tariff.dto'
+import { TariffDto } from './dto/tariff.dto'
 
 @Injectable()
 export class TariffsService {
     constructor(private readonly prisma: PrismaService) {}
 
-    async create(dto: tariffDto) {
+    async create(dto: TariffDto) {
         return this.prisma.tariff.create({
             data: dto,
             select: {
@@ -23,7 +23,7 @@ export class TariffsService {
         })
     }
 
-    async update(id: number, dto: tariffDto) {
+    async update(id: number, dto: TariffDto) {
         return this.prisma.tariff.update({
             where: {
                 id,
