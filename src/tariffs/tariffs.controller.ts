@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, HttpCode, Param, Patch, Post } from '@nestjs/common'
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from '@nestjs/common'
 import { TariffsService } from './tariffs.service'
 import { Entity } from 'src/utils/types'
 import { Tariff } from '@prisma/client'
@@ -14,6 +14,13 @@ export class TariffsController {
         private readonly entityService: EntityService
     ) {}
 
+    @HttpCode(200)
+    @Get()
+    async getActiveTariffs() {
+        return this.tariffsService.getAllActive()
+    }
+
+    @Admin()
     @HttpCode(200)
     @Post()
     async create(@Body() dto: TariffDto) {
@@ -31,5 +38,14 @@ export class TariffsController {
         if (!tariff) throw new BadRequestException('Тариф не найден')
 
         return this.tariffsService.update(+id, dto)
+    }
+
+    @Admin()
+    @HttpCode(200)
+    @Delete(':id')
+    async delete(@Param('id') id: string) {
+        await this.tariffsService.isLastActiveAndBlockDelete()
+
+        return await this.tariffsService.delete(+id)
     }
 }

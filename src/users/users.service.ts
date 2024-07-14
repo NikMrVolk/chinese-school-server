@@ -124,6 +124,7 @@ export class UsersService {
                 profile: this.generateProfileSelectObject(),
                 student: {
                     select: {
+                        id: true,
                         packageTitle: true,
                         languageLevel: true,
                     },

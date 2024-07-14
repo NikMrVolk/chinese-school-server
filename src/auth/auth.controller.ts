@@ -5,10 +5,14 @@ import { LoginDto } from './dto/login.dto'
 import { RegistrationDto, RegistrationStudentDto, RegistrationTeacherDto } from './dto/registration.dto'
 import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { User } from '@prisma/client'
+import { TariffsService } from 'src/tariffs/tariffs.service'
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService) {}
+    constructor(
+        private readonly authService: AuthService,
+        private readonly tariffsService: TariffsService
+    ) {}
 
     @HttpCode(200)
     @Post('login')
@@ -38,16 +42,22 @@ export class AuthController {
         return response
     }
 
-    // @HttpCode(200)
-    // @Post('registration/payment')
-    // async studentRegistrationPayment(@Body() dto: RegistrationDto, @Res({ passthrough: true }) res: Response) {
-    //     const { refreshToken, ...response } = await this.authService.register(dto)
-    //     this.authService.addRefreshTokenToResponse(res, refreshToken)
-    //     return response
-    // }
-
+    @Admin()
     @HttpCode(200)
-    @Post('registration/student')
+    @Post('registration/student-order')
+    async createOrder(@Body() dto: RegistrationStudentDto) {
+        await this.tariffsService.isTariffActiveAndExist(dto.tariffId)
+
+        const { refreshToken, ...response } = await this.authService.registrationStudent(dto)
+
+        await this.tariffsService.createPurchase({ student: response.user.student, tariffId: dto.tariffId })
+
+        return response
+    }
+
+    // todo после реализации оплаты продумать как делается пользователь
+    @HttpCode(200)
+    @Post('registration/student/id')
     async registrationStudent(@Body() dto: RegistrationStudentDto, @Res({ passthrough: true }) res: Response) {
         const { refreshToken, ...response } = await this.authService.registrationStudent(dto)
         this.authService.addRefreshTokenToResponse(res, refreshToken)
