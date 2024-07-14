@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import * as bcrypt from 'bcrypt'
 import { PrismaService } from 'src/prisma.service'
-import { RegistrationDto, RegistrationStudentDto } from '../auth/dto/registration.dto'
+import { RegistrationDto, RegistrationStudentDto, RegistrationTeacherDto } from '../auth/dto/registration.dto'
 import { Role, User } from '@prisma/client'
 import { generateRandomPassword } from 'src/utils/helpers'
 
@@ -89,7 +89,7 @@ export class UsersService {
         })
     }
 
-    async create(dto: RegistrationDto) {
+    async createAdmin(dto: RegistrationDto) {
         const password = generateRandomPassword(12, 15)
         console.log(password)
 
@@ -136,7 +136,7 @@ export class UsersService {
     }
     async createStudent(dto: RegistrationStudentDto) {
         const password = generateRandomPassword(12, 15)
-        console.log(password)
+        console.log('student-password', password)
 
         return this.prisma.user.create({
             data: {
@@ -186,6 +186,63 @@ export class UsersService {
         })
     }
 
+    async createTeacher(dto: RegistrationTeacherDto) {
+        const password = generateRandomPassword(12, 15)
+        console.log('teacher-password', password)
+
+        return this.prisma.user.create({
+            data: {
+                email: dto.email,
+                password: await bcrypt.hash(password, 7),
+                role: dto.role,
+                profile: {
+                    create: {
+                        name: dto.name,
+                        surname: dto.surname,
+                        patronymic: dto.patronymic,
+                        phone: dto.phone,
+                        telegram: dto.telegram,
+                        avatar: dto.avatar,
+                        birthday: dto.birthday,
+                    },
+                },
+                teacher: {
+                    create: {
+                        experience: dto.experience,
+                        description: dto.description,
+                        youtubeVideoId: dto.youtubeVideoId,
+                        youtubeVideoPreviewUrl: dto.youtubeVideoPreviewUrl,
+                    },
+                },
+            },
+            select: {
+                email: true,
+                id: true,
+                password: true,
+                role: true,
+                profile: {
+                    select: {
+                        name: true,
+                        surname: true,
+                        patronymic: true,
+                        phone: true,
+                        telegram: true,
+                        avatar: true,
+                        birthday: true,
+                    },
+                },
+                teacher: {
+                    select: {
+                        experience: true,
+                        description: true,
+                        youtubeVideoId: true,
+                        youtubeVideoPreviewUrl: true,
+                    },
+                },
+            },
+        })
+    }
+
     async getAllStudentsOfOneTeacher(teacherId: number) {
         return this.prisma.student.findMany({
             where: {
@@ -225,6 +282,7 @@ export class UsersService {
                         youtubeVideoId: true,
                         youtubeVideoPreviewUrl: true,
                         experience: true,
+                        description: true,
                     },
                 },
             },

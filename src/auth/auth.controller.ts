@@ -2,7 +2,7 @@ import { Body, Controller, HttpCode, Post, Req, Res, UnauthorizedException } fro
 import { Request, Response } from 'express'
 import { AuthService } from './auth.service'
 import { LoginDto } from './dto/login.dto'
-import { RegistrationDto, RegistrationStudentDto } from './dto/registration.dto'
+import { RegistrationDto, RegistrationStudentDto, RegistrationTeacherDto } from './dto/registration.dto'
 
 @Controller('auth')
 export class AuthController {
@@ -19,25 +19,33 @@ export class AuthController {
     }
 
     @HttpCode(200)
-    @Post('registration')
+    @Post('registration/admin')
     async register(@Body() dto: RegistrationDto, @Res({ passthrough: true }) res: Response) {
-        const { refreshToken, ...response } = await this.authService.register(dto)
+        const { refreshToken, ...response } = await this.authService.registrationAdmin(dto)
         this.authService.addRefreshTokenToResponse(res, refreshToken)
         return response
     }
 
-    @HttpCode(200)
-    @Post('registration/payment')
-    async studentRegistrationPayment(@Body() dto: RegistrationDto, @Res({ passthrough: true }) res: Response) {
-        const { refreshToken, ...response } = await this.authService.register(dto)
-        this.authService.addRefreshTokenToResponse(res, refreshToken)
-        return response
-    }
+    // @HttpCode(200)
+    // @Post('registration/payment')
+    // async studentRegistrationPayment(@Body() dto: RegistrationDto, @Res({ passthrough: true }) res: Response) {
+    //     const { refreshToken, ...response } = await this.authService.register(dto)
+    //     this.authService.addRefreshTokenToResponse(res, refreshToken)
+    //     return response
+    // }
 
     @HttpCode(200)
     @Post('registration/student')
     async registrationStudent(@Body() dto: RegistrationStudentDto, @Res({ passthrough: true }) res: Response) {
         const { refreshToken, ...response } = await this.authService.registrationStudent(dto)
+        this.authService.addRefreshTokenToResponse(res, refreshToken)
+        return response
+    }
+
+    @HttpCode(200)
+    @Post('registration/teacher')
+    async registrationTeacher(@Body() dto: RegistrationTeacherDto, @Res({ passthrough: true }) res: Response) {
+        const { refreshToken, ...response } = await this.authService.registrationTeacher(dto)
         this.authService.addRefreshTokenToResponse(res, refreshToken)
         return response
     }
@@ -53,9 +61,7 @@ export class AuthController {
         }
 
         const { refreshToken, ...response } = await this.authService.getNewTokens(refreshTokenFromCookies)
-
         this.authService.addRefreshTokenToResponse(res, refreshToken)
-
         return response
     }
 

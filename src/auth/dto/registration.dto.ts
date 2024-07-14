@@ -25,3 +25,20 @@ export class RegistrationStudentDto extends RegistrationDto {
     @IsEnum(LanguageLevel, { message: 'Неверный формат уровня владения языком' })
     languageLevel: LanguageLevel
 }
+
+export class RegistrationTeacherDto extends RegistrationDto {
+    @MinLength(2, { message: 'Id видео должно быть больше 2х символов' })
+    @IsString({ message: 'Неверный формат id видео преподавателя' })
+    youtubeVideoId: string
+
+    @MinLength(2, { message: 'Название изображения должно быть больше 2х символов' })
+    @IsString({ message: 'Неверный формат названия изображения' })
+    youtubeVideoPreviewUrl: string
+
+    @IsNumber({}, { message: 'Неверный формат опыта преподаватял' })
+    experience: number
+
+    @MinLength(10, { message: 'Описание преподавателя должно быть больше 9ти символов' })
+    @IsString({ message: 'Неверный формат описания преподавателя' })
+    description: string
+}
