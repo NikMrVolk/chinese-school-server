@@ -4,6 +4,7 @@ import { PrismaService } from 'src/prisma.service'
 import { RegistrationDto, RegistrationStudentDto, RegistrationTeacherDto } from '../auth/dto/registration.dto'
 import { Role, User } from '@prisma/client'
 import { generateRandomPassword } from 'src/utils/helpers'
+import { ProfileDto } from 'src/auth/dto/profile.dto'
 
 @Injectable()
 export class UsersService {
@@ -74,17 +75,7 @@ export class UsersService {
                 id: true,
                 password: true,
                 role: true,
-                profile: {
-                    select: {
-                        name: true,
-                        surname: true,
-                        patronymic: true,
-                        phone: true,
-                        telegram: true,
-                        avatar: true,
-                        birthday: true,
-                    },
-                },
+                profile: this.generateProfileSelectObject(),
             },
         })
     }
@@ -98,34 +89,14 @@ export class UsersService {
                 email: dto.email,
                 password: await bcrypt.hash(password, 7),
                 role: dto.role,
-                profile: {
-                    create: {
-                        name: dto.name,
-                        surname: dto.surname,
-                        patronymic: dto.patronymic,
-                        phone: dto.phone,
-                        telegram: dto.telegram,
-                        avatar: dto.avatar,
-                        birthday: dto.birthday,
-                    },
-                },
+                profile: this.generateProfileCreateObject(dto),
             },
             select: {
                 email: true,
                 id: true,
                 password: true,
                 role: true,
-                profile: {
-                    select: {
-                        name: true,
-                        surname: true,
-                        patronymic: true,
-                        phone: true,
-                        telegram: true,
-                        avatar: true,
-                        birthday: true,
-                    },
-                },
+                profile: this.generateProfileSelectObject(),
             },
         })
     }
@@ -137,17 +108,7 @@ export class UsersService {
             data: {
                 email: dto.email,
                 password: await bcrypt.hash(password, 7),
-                profile: {
-                    create: {
-                        name: dto.name,
-                        surname: dto.surname,
-                        patronymic: dto.patronymic,
-                        phone: dto.phone,
-                        telegram: dto.telegram,
-                        avatar: dto.avatar,
-                        birthday: dto.birthday,
-                    },
-                },
+                profile: this.generateProfileCreateObject(dto),
                 student: {
                     create: {
                         packageTitle: dto.packageTitle,
@@ -160,17 +121,7 @@ export class UsersService {
                 id: true,
                 password: true,
                 role: true,
-                profile: {
-                    select: {
-                        name: true,
-                        surname: true,
-                        patronymic: true,
-                        phone: true,
-                        telegram: true,
-                        avatar: true,
-                        birthday: true,
-                    },
-                },
+                profile: this.generateProfileSelectObject(),
                 student: {
                     select: {
                         packageTitle: true,
@@ -190,17 +141,7 @@ export class UsersService {
                 email: dto.email,
                 password: await bcrypt.hash(password, 7),
                 role: dto.role,
-                profile: {
-                    create: {
-                        name: dto.name,
-                        surname: dto.surname,
-                        patronymic: dto.patronymic,
-                        phone: dto.phone,
-                        telegram: dto.telegram,
-                        avatar: dto.avatar,
-                        birthday: dto.birthday,
-                    },
-                },
+                profile: this.generateProfileCreateObject(dto),
                 teacher: {
                     create: {
                         experience: dto.experience,
@@ -215,17 +156,7 @@ export class UsersService {
                 id: true,
                 password: true,
                 role: true,
-                profile: {
-                    select: {
-                        name: true,
-                        surname: true,
-                        patronymic: true,
-                        phone: true,
-                        telegram: true,
-                        avatar: true,
-                        birthday: true,
-                    },
-                },
+                profile: this.generateProfileSelectObject(),
                 teacher: {
                     select: {
                         experience: true,
@@ -255,17 +186,7 @@ export class UsersService {
                 email: true,
                 id: true,
                 role: true,
-                profile: {
-                    select: {
-                        name: true,
-                        surname: true,
-                        patronymic: true,
-                        phone: true,
-                        telegram: true,
-                        avatar: true,
-                        birthday: true,
-                    },
-                },
+                profile: this.generateProfileSelectObject(),
                 student: {
                     select: {
                         packageTitle: true,
@@ -282,5 +203,33 @@ export class UsersService {
                 },
             },
         })
+    }
+
+    generateProfileCreateObject(dto: ProfileDto) {
+        return {
+            create: {
+                name: dto.name,
+                surname: dto.surname,
+                patronymic: dto.patronymic,
+                phone: dto.phone,
+                telegram: dto.telegram,
+                avatar: dto.avatar,
+                birthday: dto.birthday,
+            },
+        }
+    }
+
+    generateProfileSelectObject() {
+        return {
+            select: {
+                name: true,
+                surname: true,
+                patronymic: true,
+                phone: true,
+                telegram: true,
+                avatar: true,
+                birthday: true,
+            },
+        }
     }
 }
