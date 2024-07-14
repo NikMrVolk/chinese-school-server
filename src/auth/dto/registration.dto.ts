@@ -1,5 +1,5 @@
 import { LanguageLevel, Role } from '@prisma/client'
-import { IsEmail, IsEnum, IsString } from 'class-validator'
+import { IsEmail, IsEnum, IsNumber, IsString, MinLength } from 'class-validator'
 import { ProfileDto } from './profile.dto'
 
 export class RegistrationDto extends ProfileDto {
@@ -11,12 +11,17 @@ export class RegistrationDto extends ProfileDto {
 }
 
 export class RegistrationStudentDto extends RegistrationDto {
-    @IsString()
+    @MinLength(2, { message: 'Название пакета должно быть больше 2х символов' })
+    @IsString({ message: 'Неверный формат названия пакета' })
     packageTitle: string
 
-    @IsString()
+    @MinLength(2, { message: 'Cсылка должна быть больше 2х символов' })
+    @IsString({ message: 'Неверный формат ссылки для оплаты' })
     paymentLink: string
 
-    @IsEnum(LanguageLevel)
+    @IsNumber({}, { message: 'Неверный формат выбранного тарифа' })
+    tariffId: number
+
+    @IsEnum(LanguageLevel, { message: 'Неверный формат уровня владения языком' })
     languageLevel: LanguageLevel
 }

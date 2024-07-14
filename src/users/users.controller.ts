@@ -1,7 +1,8 @@
-import { Controller, Get, HttpCode } from '@nestjs/common'
+import { Controller, Get, HttpCode, Param } from '@nestjs/common'
 import { UsersService } from './users.service'
 
 import { Auth, CurrentUser } from 'src/utils/decorators'
+import { User } from '@prisma/client'
 
 @Controller('users')
 export class UsersController {
@@ -17,5 +18,7 @@ export class UsersController {
     @Auth()
     @HttpCode(200)
     @Get(':id')
-    async getUserData() {}
+    async getUserData(@CurrentUser() currentUser: User, @Param('id') id: string) {
+        return this.usersService.getCurrentUser({ currentUser, searchedUserId: +id })
+    }
 }

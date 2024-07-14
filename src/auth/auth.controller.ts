@@ -2,7 +2,7 @@ import { Body, Controller, HttpCode, Post, Req, Res, UnauthorizedException } fro
 import { Request, Response } from 'express'
 import { AuthService } from './auth.service'
 import { LoginDto } from './dto/login.dto'
-import { RegistrationDto } from './dto/registration.dto'
+import { RegistrationDto, RegistrationStudentDto } from './dto/registration.dto'
 
 @Controller('auth')
 export class AuthController {
@@ -30,6 +30,14 @@ export class AuthController {
     @Post('registration/payment')
     async studentRegistrationPayment(@Body() dto: RegistrationDto, @Res({ passthrough: true }) res: Response) {
         const { refreshToken, ...response } = await this.authService.register(dto)
+        this.authService.addRefreshTokenToResponse(res, refreshToken)
+        return response
+    }
+
+    @HttpCode(200)
+    @Post('registration/student')
+    async registrationStudent(@Body() dto: RegistrationStudentDto, @Res({ passthrough: true }) res: Response) {
+        const { refreshToken, ...response } = await this.authService.registrationStudent(dto)
         this.authService.addRefreshTokenToResponse(res, refreshToken)
         return response
     }

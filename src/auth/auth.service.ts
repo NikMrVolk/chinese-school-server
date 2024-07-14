@@ -4,7 +4,7 @@ import { Response } from 'express'
 import * as bcrypt from 'bcrypt'
 import { UsersService } from 'src/users/users.service'
 import { LoginDto } from './dto/login.dto'
-import { RegistrationDto } from './dto/registration.dto'
+import { RegistrationDto, RegistrationStudentDto } from './dto/registration.dto'
 import { Role } from '@prisma/client'
 
 @Injectable()
@@ -28,11 +28,28 @@ export class AuthService {
     }
 
     async register(dto: RegistrationDto) {
+        console.log(dto)
         const oldUser = await this.usersService.getByEmail(dto.email)
 
         if (oldUser) throw new BadRequestException(`Пользователь с почтой ${dto.email} уже существует`)
 
         const { password, ...user } = await this.usersService.create(dto)
+
+        const { refreshToken } = await this.issueTokens(user.id, user.role)
+
+        return {
+            user,
+            refreshToken,
+        }
+    }
+
+    async registrationStudent(dto: RegistrationStudentDto) {
+        console.log(dto)
+        const oldUser = await this.usersService.getByEmail(dto.email)
+
+        if (oldUser) throw new BadRequestException(`Пользователь с почтой ${dto.email} уже существует`)
+
+        const { password, ...user } = await this.usersService.createStudent(dto)
 
         const { refreshToken } = await this.issueTokens(user.id, user.role)
 

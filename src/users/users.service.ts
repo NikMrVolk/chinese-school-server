@@ -9,15 +9,16 @@ import { generateRandomPassword } from 'src/utils/helpers'
 export class UsersService {
     constructor(private prisma: PrismaService) {}
 
-    async getCurrentUser({ currentUser, searchedUserId }: { currentUser: User; searchedUserId: string }) {
-        if (!searchedUserId || currentUser) {
-            return new BadRequestException('Ошибка запроса')
+    async getCurrentUser({ currentUser, searchedUserId }: { currentUser: User; searchedUserId: number }) {
+        if (!searchedUserId || !currentUser) {
+            throw new BadRequestException('Ошибка запроса')
         }
-        if (currentUser.id === +searchedUserId) {
-            const { password, ...result } = currentUser
-            return result
+
+        if (currentUser.id === searchedUserId) {
+            return this.getFullUserInfo(currentUser.id)
         }
-        const searchedUser = await this.getById(+searchedUserId)
+
+        const searchedUser = await this.getById(searchedUserId)
 
         if (!searchedUser) {
             throw new BadRequestException('Пользователь не найден')
@@ -32,7 +33,7 @@ export class UsersService {
             const allStudentsOfCurrentTeacher = await this.getAllStudentsOfOneTeacher(currentUser.id)
             if (allStudentsOfCurrentTeacher) {
                 const isSearchedUserStudentOfCurrentTeacher = allStudentsOfCurrentTeacher.some(
-                    student => student.id === +searchedUserId
+                    student => student.id === searchedUserId
                 )
 
                 if (isSearchedUserStudentOfCurrentTeacher) {
@@ -90,6 +91,7 @@ export class UsersService {
 
     async create(dto: RegistrationDto) {
         const password = generateRandomPassword(12, 15)
+        console.log(password)
 
         return this.prisma.user.create({
             data: {
@@ -134,6 +136,7 @@ export class UsersService {
     }
     async createStudent(dto: RegistrationStudentDto) {
         const password = generateRandomPassword(12, 15)
+        console.log(password)
 
         return this.prisma.user.create({
             data: {
@@ -161,6 +164,7 @@ export class UsersService {
                 email: true,
                 id: true,
                 password: true,
+                role: true,
                 profile: {
                     select: {
                         name: true,
@@ -175,6 +179,7 @@ export class UsersService {
                 student: {
                     select: {
                         packageTitle: true,
+                        languageLevel: true,
                     },
                 },
             },
