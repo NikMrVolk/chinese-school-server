@@ -1,8 +1,10 @@
-import { Body, Controller, HttpCode, Post, Req, Res, UnauthorizedException } from '@nestjs/common'
+import { Body, Controller, ForbiddenException, HttpCode, Post, Req, Res, UnauthorizedException } from '@nestjs/common'
 import { Request, Response } from 'express'
 import { AuthService } from './auth.service'
 import { LoginDto } from './dto/login.dto'
 import { RegistrationDto, RegistrationStudentDto, RegistrationTeacherDto } from './dto/registration.dto'
+import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
+import { User } from '@prisma/client'
 
 @Controller('auth')
 export class AuthController {
@@ -18,9 +20,19 @@ export class AuthController {
         return response
     }
 
+    @Auth()
+    @Admin()
     @HttpCode(200)
     @Post('registration/admin')
-    async register(@Body() dto: RegistrationDto, @Res({ passthrough: true }) res: Response) {
+    async register(
+        @Body() dto: RegistrationDto,
+        @Res({ passthrough: true }) res: Response,
+        @CurrentUser() currentUser: User
+    ) {
+        if (currentUser.email !== process.env.MAIN_ADMIN_EMAIL) {
+            throw new ForbiddenException('С вашего аккаунта такое действие недоступно')
+        }
+
         const { refreshToken, ...response } = await this.authService.registrationAdmin(dto)
         this.authService.addRefreshTokenToResponse(res, refreshToken)
         return response

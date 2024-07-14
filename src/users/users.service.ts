@@ -126,11 +126,6 @@ export class UsersService {
                         birthday: true,
                     },
                 },
-                student: {
-                    select: {
-                        packageTitle: true,
-                    },
-                },
             },
         })
     }
