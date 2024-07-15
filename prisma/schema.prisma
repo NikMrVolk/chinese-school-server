@@ -44,7 +44,7 @@ model User {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-    email    String @unique
+    email    String  @unique
     password String?
 
     role Role @default(STUDENT)
@@ -209,10 +209,14 @@ model PurchasedTariff {
 
     paymentStatus PaymentStatus @map("payment_status")
 
+    lessons Lesson[]
+
     tariffId  Int     @map("tariff_id")
     Tariff    Tariff  @relation(map: "tariff", fields: [tariffId], references: [id])
     studentId Int     @map("student_id")
     Student   Student @relation(map: "student", fields: [studentId], references: [id])
+
+    @@map("purchased_tariffs")
 }
 
 model Homework {
@@ -227,6 +231,8 @@ model Homework {
     Student   Student @relation(map: "student", fields: [studentId], references: [id])
     teacherId Int     @map("teacher_id")
     Teacher   Teacher @relation(map: "teacher", fields: [teacherId], references: [id])
+
+    @@map("homeworks")
 }
 
 model Lesson {
@@ -238,10 +244,14 @@ model Lesson {
 
     lessonStatus LessonStatus @map("lesson_status")
 
-    teacherId Int     @map("teacher_id")
-    Teacher   Teacher @relation(map: "teacher", fields: [teacherId], references: [id])
-    studentId Int
-    Student   Student @relation(map: "student", fields: [studentId], references: [id])
+    teacherId         Int              @map("teacher_id")
+    Teacher           Teacher          @relation(map: "teacher", fields: [teacherId], references: [id])
+    studentId         Int              @map("student_id")
+    Student           Student          @relation(map: "student", fields: [studentId], references: [id])
+    purchasedTariffId Int?             @map("purchased_tariff_id")
+    PurchasedTariff   PurchasedTariff? @relation(map: "purchased_tariff", fields: [purchasedTariffId], references: [id])
+
+    @@map("lessons")
 }
 
 model Chat {
@@ -257,6 +267,8 @@ model Chat {
     Student   Student @relation(map: "student", fields: [studentId], references: [id])
     teacherId Int     @map("teacher_id")
     Teacher   Teacher @relation(map: "teacher", fields: [teacherId], references: [id])
+
+    @@map("chats")
 }
 
 model Message {
@@ -270,4 +282,6 @@ model Message {
 
     chatId Int  @map("chat_id")
     Chat   Chat @relation(map: "chat", fields: [chatId], references: [id], onDelete: Cascade)
+
+    @@map("messages")
 }

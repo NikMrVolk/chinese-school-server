@@ -1,7 +1,7 @@
-import { Controller, Get, HttpCode, Param } from '@nestjs/common'
+import { Controller, Get, HttpCode, Param, Post } from '@nestjs/common'
 import { UsersService } from './users.service'
 
-import { Auth, CurrentUser } from 'src/utils/decorators'
+import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { User } from '@prisma/client'
 
 @Controller('users')
@@ -20,5 +20,13 @@ export class UsersController {
     @Get(':id')
     async getUserData(@CurrentUser() currentUser: User, @Param('id') id: string) {
         return this.usersService.getCurrentUser({ currentUser, searchedUserId: +id })
+    }
+
+    @Auth()
+    @Admin()
+    @Post(':teacherId/:studentId')
+    @HttpCode(200)
+    async addStudentToTeacher(@Param('teacherId') teacherId: string, @Param('studentId') studentId: string) {
+        return this.usersService.addStudentToTeacher(+teacherId, +studentId)
     }
 }

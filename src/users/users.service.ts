@@ -19,15 +19,14 @@ export class UsersService {
             return this.getFullUserInfo(currentUser.id)
         }
 
-        const searchedUser = await this.getById(searchedUserId)
+        const searchedUser = await this.getFullUserInfo(searchedUserId)
 
         if (!searchedUser) {
             throw new BadRequestException('Пользователь не найден')
         }
 
         if (currentUser.role === Role.ADMIN) {
-            const { password, ...result } = searchedUser
-            return result
+            return searchedUser
         }
 
         if (currentUser.role === Role.TEACHER && searchedUser.role === Role.STUDENT) {
@@ -38,9 +37,18 @@ export class UsersService {
                 )
 
                 if (isSearchedUserStudentOfCurrentTeacher) {
-                    const { password, ...result } = searchedUser
-                    return result
+                    return searchedUser
                 }
+            }
+        }
+
+        if (currentUser.role === Role.STUDENT && searchedUser.role === Role.TEACHER) {
+            const isStudentExistInTeacherStudentsList = searchedUser.teacher.students.some(
+                student => student.userId === currentUser.id
+            )
+
+            if (isStudentExistInTeacherStudentsList) {
+                return searchedUser
             }
         }
 
@@ -192,6 +200,8 @@ export class UsersService {
                     select: {
                         packageTitle: true,
                         languageLevel: true,
+                        teacherId: true,
+                        purchasedTariffs: true,
                     },
                 },
                 teacher: {
@@ -200,8 +210,20 @@ export class UsersService {
                         youtubeVideoPreviewUrl: true,
                         experience: true,
                         description: true,
+                        students: true,
                     },
                 },
+            },
+        })
+    }
+
+    async addStudentToTeacher(teacherId: number, studentId: number) {
+        return await this.prisma.student.update({
+            where: {
+                id: studentId,
+            },
+            data: {
+                teacherId,
             },
         })
     }
