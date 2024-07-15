@@ -7,6 +7,21 @@ import { PaymentStatus, Student } from '@prisma/client'
 export class TariffsService {
     constructor(private readonly prisma: PrismaService) {}
 
+    async getAllStudentTariffs(studentId: number) {
+        return this.prisma.purchasedTariff.findMany({
+            where: {
+                id: studentId,
+            },
+            select: {
+                id: true,
+                completedHours: true,
+                paymentStatus: true,
+                paymentLink: true,
+                Tariff: true,
+            },
+        })
+    }
+
     async getAllActive() {
         return this.prisma.tariff.findMany({
             where: {

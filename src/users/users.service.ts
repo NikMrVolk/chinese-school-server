@@ -55,12 +55,20 @@ export class UsersService {
         throw new BadRequestException('Пользователь не найден')
     }
 
-    async getUsers() {
+    async getUsers({ role, teacherId }: { role?: Role; teacherId?: number }) {
         return this.prisma.user.findMany({
+            where: {
+                ...(role && { role }),
+                ...(teacherId && { teacherId }),
+            },
             select: {
                 email: true,
                 id: true,
-                password: false,
+                password: true,
+                role: true,
+                profile: this.generateProfileSelectObject(),
+                teacher: true,
+                student: true,
             },
         })
     }
@@ -84,6 +92,8 @@ export class UsersService {
                 password: true,
                 role: true,
                 profile: this.generateProfileSelectObject(),
+                teacher: true,
+                student: true,
             },
         })
     }
@@ -198,6 +208,7 @@ export class UsersService {
                 profile: this.generateProfileSelectObject(),
                 student: {
                     select: {
+                        id: true,
                         packageTitle: true,
                         languageLevel: true,
                         teacherId: true,
@@ -206,6 +217,7 @@ export class UsersService {
                 },
                 teacher: {
                     select: {
+                        id: true,
                         youtubeVideoId: true,
                         youtubeVideoPreviewUrl: true,
                         experience: true,

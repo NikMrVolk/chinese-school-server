@@ -20,6 +20,12 @@ export class TariffsController {
         return this.tariffsService.getAllActive()
     }
 
+    @HttpCode(200)
+    @Get(':id')
+    async getOne(@Param('id') id: string) {
+        return this.tariffsService.getAllStudentTariffs(+id)
+    }
+
     @Admin()
     @HttpCode(200)
     @Post()

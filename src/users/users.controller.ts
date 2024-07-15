@@ -1,12 +1,18 @@
-import { Controller, Get, HttpCode, Param, Post } from '@nestjs/common'
+import { Controller, Get, HttpCode, Param, Post, Query } from '@nestjs/common'
 import { UsersService } from './users.service'
 
 import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
-import { User } from '@prisma/client'
+import { Role, User } from '@prisma/client'
 
 @Controller('users')
 export class UsersController {
     constructor(private readonly usersService: UsersService) {}
+
+    @HttpCode(200)
+    @Get()
+    async getAllUsers(@Query('role') role: Role, @Query('teacherId') teacherId: string) {
+        return this.usersService.getUsers({ role, teacherId: +teacherId })
+    }
 
     @Auth()
     @HttpCode(200)
