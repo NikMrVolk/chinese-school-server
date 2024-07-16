@@ -10,7 +10,7 @@ async function bootstrap() {
     app.use(cookieParser())
     app.useGlobalPipes(new ValidationPipe())
     app.enableCors({
-        origin: ['http://localhost:3000', 'nickmozav.online', process.env.CLIENT_HOST],
+        origin: ['http://localhost:3000', 'nickmozav.online', process.env.CLIENT_URL],
         credentials: true,
         exposedHeaders: 'set-cookie',
     })
