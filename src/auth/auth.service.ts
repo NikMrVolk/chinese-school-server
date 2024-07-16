@@ -124,24 +124,24 @@ export class AuthService {
         res.cookie(this.REFRESH_TOKEN_NAME, refreshToken, {
             httpOnly: true,
             // todo change to variables
-            domain: 'localhost',
+            domain: process.env.CLIENT_HOST,
             expires: expiresIn,
             // true if production
             secure: true,
             // lax if production
-            sameSite: 'none',
+            sameSite: process.env.SAME_SITE_COOKIE as 'none' | 'lax' | 'strict' | 'none',
         })
     }
 
     removeRefreshTokenFromResponse(res: Response) {
         res.cookie(this.REFRESH_TOKEN_NAME, '', {
             httpOnly: true,
-            domain: 'localhost',
+            domain: process.env.CLIENT_HOST,
             expires: new Date(0),
             // true if production
             secure: true,
             // lax if production
-            sameSite: 'none',
+            sameSite: process.env.SAME_SITE_COOKIE as 'none' | 'lax' | 'strict' | 'none',
         })
     }
 }
