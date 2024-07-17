@@ -1,10 +1,11 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from '@nestjs/common'
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Res } from '@nestjs/common'
 import { TariffsService } from './tariffs.service'
 import { Entity } from 'src/utils/types'
 import { Tariff } from '@prisma/client'
 import { EntityService } from '../utils/services/entity.service'
 import { Admin, Auth } from 'src/utils/decorators'
 import { CreateTariffDto, UpdateTariffDto } from './dto/tariff.dto'
+import { Response } from 'express'
 
 @Auth()
 @Controller('tariffs')
@@ -49,8 +50,10 @@ export class TariffsController {
     @Admin()
     @HttpCode(200)
     @Delete(':id')
-    async delete(@Param('id') id: string) {
-        await this.tariffsService.isLastActiveAndBlockDelete()
+    async delete(@Param('id') id: string, @Res({ passthrough: true }) res: Response) {
+        const isLast = await this.tariffsService.isLastActiveAndBlockDelete()
+
+        if (isLast) return res.json({ message: 'Нельзя удалить последний тариф' })
 
         return await this.tariffsService.delete(+id)
     }

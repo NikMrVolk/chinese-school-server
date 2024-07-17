@@ -120,9 +120,7 @@ export class TariffsService {
     async isLastActiveAndBlockDelete() {
         const allActiveTariffs = await this.getAllActive()
 
-        if (allActiveTariffs.length === 1) {
-            throw new Error('в приложении всегда должен быть хотя бы один тариф')
-        }
+        return allActiveTariffs.length === 1 ? true : false
     }
 
     generateTariffSelectObject() {
