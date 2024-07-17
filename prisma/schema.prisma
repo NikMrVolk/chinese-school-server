@@ -191,7 +191,6 @@ model Tariff {
     quantityWeeksActive Int      @map("quantity_weeks_active")
     isRescheduleLessons Boolean  @map("is_rescedule_lessons")
     isPopular           Boolean  @default(false) @map("is_popular")
-    isDeleted           Boolean  @default(false) @map("is_deleted")
 
     @@map("tariffs")
 }
@@ -208,7 +207,6 @@ model PurchasedTariff {
     quantityWeeksActive Int      @map("quantity_weeks_active")
     isRescheduleLessons Boolean  @map("is_rescedule_lessons")
     isPopular           Boolean  @default(false) @map("is_popular")
-    isDeleted           Boolean  @default(false) @map("is_deleted")
 
     startedAt      DateTime? @map("started_at")
     completedHours Int       @map("completed_hours")

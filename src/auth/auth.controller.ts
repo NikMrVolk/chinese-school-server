@@ -50,7 +50,8 @@ export class AuthController {
 
         const { refreshToken, ...response } = await this.authService.registrationStudent(dto)
 
-        await this.tariffsService.createPurchase({ student: response.user.student, tariffId: dto.tariffId })
+        // todo fix deploy error
+        // await this.tariffsService.createPurchase({ student: response.user.student, tariffId: dto.tariffId })
 
         return response
     }
