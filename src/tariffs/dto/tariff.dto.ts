@@ -35,10 +35,6 @@ export class TariffDto {
     isPopular: boolean
 }
 
-export class CreateTariffDto extends TariffDto {
-    @IsNotEmpty({ message: 'Неверный формат статуса тарифа для покупки' })
-    @IsBoolean({ message: 'Неверный формат статуса тарифа для покупки' })
-    isDeleted: boolean
-}
+export class CreateTariffDto extends TariffDto {}
 
 export class UpdateTariffDto extends TariffDto {}
