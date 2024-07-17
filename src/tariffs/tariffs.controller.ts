@@ -4,7 +4,7 @@ import { Entity } from 'src/utils/types'
 import { Tariff } from '@prisma/client'
 import { EntityService } from '../utils/services/entity.service'
 import { Admin, Auth } from 'src/utils/decorators'
-import { TariffDto } from './dto/tariff.dto'
+import { CreateTariffDto, UpdateTariffDto } from './dto/tariff.dto'
 
 @Auth()
 @Controller('tariffs')
@@ -29,7 +29,7 @@ export class TariffsController {
     @Admin()
     @HttpCode(200)
     @Post()
-    async create(@Body() dto: TariffDto) {
+    async create(@Body() dto: CreateTariffDto) {
         const tariff = await this.tariffsService.create(dto)
 
         return tariff
@@ -38,7 +38,7 @@ export class TariffsController {
     @Admin()
     @HttpCode(200)
     @Patch(':id')
-    async update(@Param('id') id: string, @Body() dto: TariffDto) {
+    async update(@Param('id') id: string, @Body() dto: UpdateTariffDto) {
         const tariff = await this.entityService.getById<Tariff>(Entity.TARIFF, +id)
 
         if (!tariff) throw new BadRequestException('Тариф не найден')
