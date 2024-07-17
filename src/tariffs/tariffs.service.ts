@@ -17,16 +17,12 @@ export class TariffsService {
                 completedHours: true,
                 paymentStatus: true,
                 paymentLink: true,
-                Tariff: true,
             },
         })
     }
 
-    async getAllActive() {
+    async getAll() {
         return this.prisma.tariff.findMany({
-            where: {
-                isDeleted: false,
-            },
             select: this.generateTariffSelectObject(),
         })
     }
@@ -41,20 +37,31 @@ export class TariffsService {
     }
 
     async createPurchase({ student, tariffId }: { student: Partial<Student>; tariffId: number }) {
+        const selectedTariff = await this.prisma.tariff.findUnique({
+            where: {
+                id: tariffId,
+            },
+        })
+
+        if (!selectedTariff) {
+            throw new BadRequestException('Тариф не найден')
+        }
+
         return this.prisma.purchasedTariff.create({
             data: {
                 completedHours: 0,
                 // todo генерация ссылки для оплаты и отправка её на почту
                 paymentLink: 'paymentLink',
                 paymentStatus: PaymentStatus.IN_PROCESS,
+                title: selectedTariff.title,
+                price: selectedTariff.price,
+                quantityHours: selectedTariff.quantityHours,
+                benefits: selectedTariff.benefits,
+                quantityWeeksActive: selectedTariff.quantityWeeksActive,
+                isRescheduleLessons: selectedTariff.isRescheduleLessons,
                 Student: {
                     connect: {
                         id: student.id,
-                    },
-                },
-                Tariff: {
-                    connect: {
-                        id: tariffId,
                     },
                 },
             },
@@ -68,7 +75,7 @@ export class TariffsService {
             },
         })
 
-        if (!tariff || tariff.isDeleted) {
+        if (!tariff) {
             throw new BadRequestException('Тариф не найден')
         }
     }
@@ -87,7 +94,7 @@ export class TariffsService {
 
     async isOtherPopular(dto: TariffDto) {
         if (dto.isPopular) {
-            const allTariffs = await this.getAllActive()
+            const allTariffs = await this.getAll()
 
             const popularTariff = allTariffs.find(tariff => tariff.isPopular)
 
@@ -105,20 +112,17 @@ export class TariffsService {
     }
 
     async delete(id: number) {
-        return this.prisma.tariff.update({
+        return this.prisma.tariff.delete({
             where: {
                 id,
             },
-            data: {
-                isDeleted: true,
-                isPopular: false,
-            },
+
             select: this.generateTariffSelectObject(),
         })
     }
 
-    async isLastActiveAndBlockDelete() {
-        const allActiveTariffs = await this.getAllActive()
+    async isLastActive() {
+        const allActiveTariffs = await this.getAll()
 
         return allActiveTariffs.length === 1 ? true : false
     }
@@ -133,7 +137,6 @@ export class TariffsService {
             quantityWeeksActive: true,
             isRescheduleLessons: true,
             isPopular: true,
-            isDeleted: true,
         }
     }
 }

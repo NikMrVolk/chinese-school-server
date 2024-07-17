@@ -193,8 +193,6 @@ model Tariff {
     isPopular           Boolean  @default(false) @map("is_popular")
     isDeleted           Boolean  @default(false) @map("is_deleted")
 
-    PurchasedTariff PurchasedTariff[]
-
     @@map("tariffs")
 }
 
@@ -202,6 +200,15 @@ model PurchasedTariff {
     id        Int      @id @default(autoincrement())
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+    title               String
+    price               Int
+    quantityHours       Int      @map("quantity_hours")
+    benefits            String[]
+    quantityWeeksActive Int      @map("quantity_weeks_active")
+    isRescheduleLessons Boolean  @map("is_rescedule_lessons")
+    isPopular           Boolean  @default(false) @map("is_popular")
+    isDeleted           Boolean  @default(false) @map("is_deleted")
 
     startedAt      DateTime? @map("started_at")
     completedHours Int       @map("completed_hours")
@@ -211,8 +218,6 @@ model PurchasedTariff {
 
     lessons Lesson[]
 
-    tariffId  Int     @map("tariff_id")
-    Tariff    Tariff  @relation(map: "tariff", fields: [tariffId], references: [id])
     studentId Int     @map("student_id")
     Student   Student @relation(map: "student", fields: [studentId], references: [id])
 

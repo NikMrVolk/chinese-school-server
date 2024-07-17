@@ -17,8 +17,8 @@ export class TariffsController {
 
     @HttpCode(200)
     @Get()
-    async getActiveTariffs() {
-        return this.tariffsService.getAllActive()
+    async getAllTariffs() {
+        return this.tariffsService.getAll()
     }
 
     @HttpCode(200)
@@ -51,7 +51,7 @@ export class TariffsController {
     @HttpCode(200)
     @Delete(':id')
     async delete(@Param('id') id: string, @Res({ passthrough: true }) res: Response) {
-        const isLast = await this.tariffsService.isLastActiveAndBlockDelete()
+        const isLast = await this.tariffsService.isLastActive()
 
         if (isLast) return res.json({ message: 'Нельзя удалить последний тариф' })
 
