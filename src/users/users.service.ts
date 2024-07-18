@@ -59,7 +59,11 @@ export class UsersService {
         return this.prisma.user.findMany({
             where: {
                 ...(role && { role }),
-                ...(teacherId && { teacherId }),
+                ...(teacherId && {
+                    teacher: {
+                        id: teacherId,
+                    },
+                }),
             },
             select: {
                 email: true,
