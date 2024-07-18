@@ -1,9 +1,10 @@
-import { Controller, Get, HttpCode, Param, Post, Query, Res } from '@nestjs/common'
+import { Body, Controller, Get, HttpCode, Param, Patch, Post, Query, Res } from '@nestjs/common'
 import { UsersService } from './users.service'
 
 import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { Role, User } from '@prisma/client'
 import { Response } from 'express'
+import { ChangeProfileDto } from './dto/ChangeProfile.dto'
 
 @Controller('users')
 export class UsersController {
@@ -41,5 +42,16 @@ export class UsersController {
         await this.usersService.addStudentToTeacher(+teacherId, +studentId)
 
         return res.json({ message: 'Студент добавлен к учителю' })
+    }
+
+    @Auth()
+    @HttpCode(200)
+    @Patch('profile/:id')
+    async changeProfile(@Body() dto: ChangeProfileDto, @Param('id') id: string, @CurrentUser() currentUser: User) {
+        return this.usersService.changeProfile({
+            changeUserId: +id,
+            currentUser,
+            dto,
+        })
     }
 }

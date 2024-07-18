@@ -5,6 +5,7 @@ import { RegistrationDto, RegistrationStudentDto, RegistrationTeacherDto } from 
 import { Role, User } from '@prisma/client'
 import { generateRandomPassword } from 'src/utils/helpers'
 import { ProfileDto } from 'src/auth/dto/profile.dto'
+import { ChangeProfileDto } from './dto/ChangeProfile.dto'
 
 @Injectable()
 export class UsersService {
@@ -290,6 +291,88 @@ export class UsersService {
                 },
             },
         })
+    }
+
+    public async changeProfile({
+        currentUser,
+        changeUserId,
+        dto,
+    }: {
+        currentUser: User
+        changeUserId: number
+        dto: ChangeProfileDto
+    }) {
+        const changeUser = await this.getFullUserInfo(changeUserId)
+
+        if (!changeUser) {
+            throw new BadRequestException('Пользователь не найден')
+        }
+
+        if (changeUser.email !== dto.email) {
+            await this.validateEmail(dto.email)
+        }
+
+        if (changeUser.id === currentUser.id) {
+            return this.updateUserProfile(changeUserId, dto)
+        }
+
+        if (currentUser.role === Role.ADMIN) {
+            return this.updateUserProfile(changeUserId, dto)
+        }
+
+        throw new BadRequestException('Не удалось изменить данные')
+    }
+
+    private async updateUserProfile(userId: number, dto: ChangeProfileDto) {
+        return await this.prisma.user.update({
+            where: {
+                id: userId,
+            },
+            data: {
+                profile: {
+                    update: {
+                        name: dto.name,
+                        surname: dto.surname,
+                        patronymic: dto.patronymic,
+                        phone: dto.phone,
+                        telegram: dto.telegram,
+                    },
+                },
+            },
+            select: {
+                email: true,
+                id: true,
+                role: true,
+                profile: this.generateProfileSelectObject(),
+                teacher: {
+                    select: {
+                        id: true,
+                        experience: true,
+                        description: true,
+                        youtubeVideoId: true,
+                        youtubeVideoPreviewUrl: true,
+                    },
+                },
+                student: {
+                    select: {
+                        id: true,
+                        packageTitle: true,
+                        languageLevel: true,
+                        teacherId: true,
+                    },
+                },
+            },
+        })
+    }
+
+    private async validateEmail(email: string) {
+        const user = await this.prisma.user.findUnique({
+            where: {
+                email,
+            },
+        })
+
+        if (user) throw new BadRequestException(`Пользователь с почтой ${email} уже существует`)
     }
 
     generateProfileCreateObject(dto: ProfileDto) {
