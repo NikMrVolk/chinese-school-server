@@ -1,8 +1,9 @@
-import { Controller, Get, HttpCode, Param, Post, Query } from '@nestjs/common'
+import { Controller, Get, HttpCode, Param, Post, Query, Res } from '@nestjs/common'
 import { UsersService } from './users.service'
 
 import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { Role, User } from '@prisma/client'
+import { Response } from 'express'
 
 @Controller('users')
 export class UsersController {
@@ -32,7 +33,13 @@ export class UsersController {
     @Admin()
     @Post(':teacherId/:studentId')
     @HttpCode(200)
-    async addStudentToTeacher(@Param('teacherId') teacherId: string, @Param('studentId') studentId: string) {
-        return this.usersService.addStudentToTeacher(+teacherId, +studentId)
+    async addStudentToTeacher(
+        @Param('teacherId') teacherId: string,
+        @Param('studentId') studentId: string,
+        @Res() res: Response
+    ) {
+        await this.usersService.addStudentToTeacher(+teacherId, +studentId)
+
+        return res.json({ message: 'Студент добавлен к учителю' })
     }
 }

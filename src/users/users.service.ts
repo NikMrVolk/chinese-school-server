@@ -60,8 +60,8 @@ export class UsersService {
             where: {
                 ...(role && { role }),
                 ...(teacherId && {
-                    teacher: {
-                        id: teacherId,
+                    student: {
+                        teacherId: teacherId,
                     },
                 }),
             },
@@ -71,8 +71,23 @@ export class UsersService {
                 password: true,
                 role: true,
                 profile: this.generateProfileSelectObject(),
-                teacher: true,
-                student: true,
+                teacher: {
+                    select: {
+                        id: true,
+                        experience: true,
+                        description: true,
+                        youtubeVideoId: true,
+                        youtubeVideoPreviewUrl: true,
+                        students: true,
+                    },
+                },
+                student: {
+                    select: {
+                        id: true,
+                        packageTitle: true,
+                        languageLevel: true,
+                    },
+                },
             },
         })
     }
