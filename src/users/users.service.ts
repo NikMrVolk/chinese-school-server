@@ -30,8 +30,11 @@ export class UsersService {
         }
 
         if (currentUser.role === Role.TEACHER && searchedUser.role === Role.STUDENT) {
-            const allStudentsOfCurrentTeacher = await this.getAllStudentsOfOneTeacher(currentUser.id)
-            if (allStudentsOfCurrentTeacher) {
+            const teacher = await this.getFullUserInfo(currentUser.id)
+
+            const allStudentsOfCurrentTeacher = await this.getAllStudentsOfOneTeacher(teacher.teacher.id)
+
+            if (allStudentsOfCurrentTeacher.length > 0) {
                 const isSearchedUserStudentOfCurrentTeacher = allStudentsOfCurrentTeacher.some(
                     student => student.id === searchedUserId
                 )
@@ -39,16 +42,6 @@ export class UsersService {
                 if (isSearchedUserStudentOfCurrentTeacher) {
                     return searchedUser
                 }
-            }
-        }
-
-        if (currentUser.role === Role.STUDENT && searchedUser.role === Role.TEACHER) {
-            const isStudentExistInTeacherStudentsList = searchedUser.teacher.students.some(
-                student => student.userId === currentUser.id
-            )
-
-            if (isStudentExistInTeacherStudentsList) {
-                return searchedUser
             }
         }
 
@@ -208,9 +201,25 @@ export class UsersService {
     }
 
     async getAllStudentsOfOneTeacher(teacherId: number) {
-        return this.prisma.student.findMany({
+        return this.prisma.user.findMany({
             where: {
-                teacherId,
+                student: {
+                    teacherId,
+                },
+            },
+            select: {
+                email: true,
+                id: true,
+                role: true,
+                profile: this.generateProfileSelectObject(),
+                student: {
+                    select: {
+                        id: true,
+                        packageTitle: true,
+                        languageLevel: true,
+                        teacherId: true,
+                    },
+                },
             },
         })
     }
