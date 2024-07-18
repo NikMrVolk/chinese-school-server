@@ -28,9 +28,16 @@ export class TariffsService {
 
     async create(dto: TariffDto) {
         await this.isOtherPopular(dto)
-
         return this.prisma.tariff.create({
-            data: dto,
+            data: {
+                title: dto.title,
+                price: dto.price,
+                quantityHours: dto.quantityHours,
+                benefits: dto.benefits,
+                quantityWeeksActive: dto.quantityWeeksActive,
+                isRescheduleLessons: dto.isRescheduleLessons,
+                isPopular: dto.isPopular,
+            },
             select: this.generateTariffSelectObject(),
         })
     }
@@ -88,7 +95,15 @@ export class TariffsService {
             where: {
                 id,
             },
-            data: dto,
+            data: {
+                title: dto.title,
+                price: dto.price,
+                quantityHours: dto.quantityHours,
+                benefits: dto.benefits,
+                quantityWeeksActive: dto.quantityWeeksActive,
+                isRescheduleLessons: dto.isRescheduleLessons,
+                isPopular: dto.isPopular,
+            },
             select: this.generateTariffSelectObject(),
         })
     }
