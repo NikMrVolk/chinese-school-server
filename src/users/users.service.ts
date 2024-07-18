@@ -216,7 +216,7 @@ export class UsersService {
                         packageTitle: true,
                         languageLevel: true,
                         teacherId: true,
-                        purchasedTariffs: true,
+                        // purchasedTariffs: true,
                     },
                 },
                 teacher: {
@@ -234,12 +234,36 @@ export class UsersService {
     }
 
     async addStudentToTeacher(teacherId: number, studentId: number) {
-        return await this.prisma.student.update({
+        const teacher = await this.prisma.teacher.findUnique({
+            where: {
+                id: teacherId,
+            },
+        })
+
+        if (!teacher) {
+            throw new BadRequestException(`Учитель не найден`)
+        }
+
+        const student = await this.prisma.student.findUnique({
             where: {
                 id: studentId,
             },
+        })
+
+        if (!student) {
+            throw new BadRequestException(`Студень не найден`)
+        }
+
+        return await this.prisma.teacher.update({
+            where: {
+                id: teacherId,
+            },
             data: {
-                teacherId,
+                students: {
+                    connect: {
+                        id: studentId,
+                    },
+                },
             },
         })
     }
