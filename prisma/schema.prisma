@@ -80,7 +80,7 @@ model Otp {
     updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
     code     String
-    attempts Int
+    attempts Int    @default(0)
 
     userId Int  @map("user_id")
     User   User @relation(map: "user", fields: [userId], references: [id], onDelete: Cascade)

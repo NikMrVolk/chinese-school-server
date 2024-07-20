@@ -18,7 +18,6 @@ export class AuthController {
     @Post('login')
     async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
         const { refreshToken, ...response } = await this.authService.login(dto)
-
         this.authService.addRefreshTokenToResponse(res, refreshToken)
 
         return response
@@ -72,6 +71,10 @@ export class AuthController {
         this.authService.addRefreshTokenToResponse(res, refreshToken)
         return response
     }
+
+    // @HttpCode(200)
+    // @Post('otp')
+    // async otp(@Body() dto: { code: string }, @Res({ passthrough: true }) res: Response) {}
 
     @HttpCode(200)
     @Post('access-token')

@@ -5,26 +5,68 @@ import * as bcrypt from 'bcrypt'
 import { UsersService } from 'src/users/users.service'
 import { LoginDto } from './dto/login.dto'
 import { RegistrationDto, RegistrationStudentDto, RegistrationTeacherDto } from './dto/registration.dto'
-import { Role } from '@prisma/client'
+import { Role, User } from '@prisma/client'
+import { PrismaService } from 'src/prisma.service'
+import { createOtpCode, hashValue } from 'src/utils/helpers'
 
 @Injectable()
 export class AuthService {
     EXPIRE_DAY_REFRESH_TOKEN = 1
     REFRESH_TOKEN_NAME = 'refreshToken'
+    QUANTITY_NUMBERS_IN_OTP = 4
 
     constructor(
         private jwt: JwtService,
-        private usersService: UsersService
+        private usersService: UsersService,
+        private prisma: PrismaService
     ) {}
 
     async login(dto: LoginDto) {
         const { password, ...user } = await this.validateUser(dto)
+        await this.isUserAdminAndSendOtp(user)
         const tokens = await this.issueTokens(user.id, user.role)
 
         return {
             user,
             ...tokens,
         }
+    }
+
+    private async isUserAdminAndSendOtp(user: Partial<User>) {
+        if (user.role === Role.ADMIN) {
+            const otp = createOtpCode(this.QUANTITY_NUMBERS_IN_OTP)
+            await this.createOtpToUser(user.id, otp.toString())
+            return true
+        }
+    }
+
+    private async createOtpToUser(userId: number, code: string) {
+        const userOtps = await this.prisma.otp.findMany({
+            where: {
+                userId,
+            },
+        })
+
+        if (userOtps.length >= 1) {
+            await this.prisma.otp.deleteMany({
+                where: {
+                    userId,
+                },
+            })
+        }
+
+        await this.prisma.user.update({
+            where: {
+                id: userId,
+            },
+            data: {
+                otps: {
+                    create: {
+                        code: await hashValue(code),
+                    },
+                },
+            },
+        })
     }
 
     async registrationAdmin(dto: RegistrationDto) {
