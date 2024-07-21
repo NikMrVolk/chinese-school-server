@@ -23,7 +23,12 @@ export class AuthService {
 
     async login(dto: LoginDto) {
         const { password, ...user } = await this.validateUser(dto)
-        await this.isUserAdminAndSendOtp(user)
+        const isUserAdmin = await this.isUserAdminAndSendOtp(user)
+
+        if (isUserAdmin) {
+            return { otp: true }
+        }
+
         const tokens = await this.issueTokens(user.id, user.role)
 
         return {
@@ -38,6 +43,7 @@ export class AuthService {
             await this.createOtpToUser(user.id, otp.toString())
             return true
         }
+        return false
     }
 
     private async createOtpToUser(userId: number, code: string) {

@@ -17,7 +17,14 @@ export class AuthController {
     @HttpCode(200)
     @Post('login')
     async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
-        const { refreshToken, ...response } = await this.authService.login(dto)
+        const userWithTokenOrOtp = await this.authService.login(dto)
+
+        if ('otp' in userWithTokenOrOtp) {
+            return { ...userWithTokenOrOtp, date: new Date() }
+        }
+
+        const { refreshToken, ...response } = userWithTokenOrOtp
+
         this.authService.addRefreshTokenToResponse(res, refreshToken)
 
         return response
