@@ -8,6 +8,7 @@ import { RegistrationDto, RegistrationStudentDto, RegistrationTeacherDto } from 
 import { Role, User } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
 import { createOtpCode, hashValue } from 'src/utils/helpers'
+import { MailsService } from 'src/mails/mails.service'
 
 @Injectable()
 export class AuthService {
@@ -18,7 +19,8 @@ export class AuthService {
     constructor(
         private jwt: JwtService,
         private usersService: UsersService,
-        private prisma: PrismaService
+        private prisma: PrismaService,
+        private mailsService: MailsService
     ) {}
 
     async login(dto: LoginDto) {
@@ -40,6 +42,7 @@ export class AuthService {
     private async isUserAdminAndSendOtp(user: Partial<User>) {
         if (user.role === Role.ADMIN) {
             const otp = createOtpCode(this.QUANTITY_NUMBERS_IN_OTP)
+            this.mailsService.sendOtpCode(user.email, otp.toString())
             await this.createOtpToUser(user.id, otp.toString())
             return true
         }

@@ -8,6 +8,7 @@ import { AuthService } from './auth.service'
 import { JwtStrategy } from './jwt.strategy'
 import { UsersModule } from 'src/users/users.module'
 import { TariffsModule } from 'src/tariffs/tariffs.module'
+import { MailsModule } from 'src/mails/Mails.module'
 
 @Module({
     controllers: [AuthController],
@@ -16,6 +17,7 @@ import { TariffsModule } from 'src/tariffs/tariffs.module'
         ConfigModule,
         UsersModule,
         TariffsModule,
+        MailsModule,
         JwtModule.registerAsync({
             imports: [ConfigModule],
             inject: [ConfigService],

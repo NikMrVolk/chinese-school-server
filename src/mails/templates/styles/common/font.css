@@ -1,0 +1,14 @@
+@font-face {
+    font-family: 'Gilroy';
+    src:
+        url('../../fonts/Gilroy-Bold.woff2') format('woff2'),
+        url('../../fonts/Gilroy-Medium.woff2') format('woff2'),
+        url('../../fonts/Gilroy-Regular.woff2') format('woff2'),
+        url('../../fonts/Gilroy-Semibold.woff2') format('woff2');
+    font-weight: normal;
+    font-style: normal;
+}
+
+.container {
+    font-family: 'Gilroy', Arial;
+}
