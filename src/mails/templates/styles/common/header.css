@@ -1,9 +1,9 @@
 .header {
-    margin-bottom: 32px;
     max-width: 169px;
 }
 
 .logo-link {
+    display: block;
     width: 169px;
     height: 62px;
 }
@@ -15,7 +15,6 @@
 
 @media only screen and (min-width: 768px) {
     .header {
-        margin-bottom: 70px;
         max-width: 325px;
     }
 
@@ -27,11 +26,5 @@
     .logo-img {
         width: 325px;
         height: 119px;
-    }
-}
-
-@media only screen and (min-width: 1200px) {
-    .header {
-        margin-bottom: 50px;
     }
 }

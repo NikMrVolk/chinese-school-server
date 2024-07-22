@@ -1,0 +1,74 @@
+.main-content__text {
+    font-size: 18px;
+    line-height: 27px;
+}
+
+.main-content > .main-content__text {
+    margin-right: 30px;
+}
+
+.main-content__password,
+.main-content__login {
+    font-size: 24px;
+    line-height: 36px;
+}
+
+.main-content__login {
+    color: #053cff;
+    text-decoration: underline;
+    text-decoration-color: #053cff;
+}
+
+.button {
+    margin-top: 32px;
+    width: 125px;
+    height: 37px;
+    background: #ac222f;
+    border-radius: 500px;
+    cursor: pointer;
+    animation-duration: 400ms;
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    line-height: 20.8px;
+    display: block;
+    padding: 8px 40px;
+}
+
+.button a {
+    text-decoration: none;
+}
+
+@media only screen and (min-width: 768px) {
+    .main-content__text {
+        font-size: 32px;
+        line-height: 48px;
+    }
+
+    .main-content > .main-content__text {
+        margin-right: 60px;
+    }
+
+    .button {
+        margin-top: 50px;
+        width: 318px;
+        height: 94px;
+        padding: 23.5px 108.5px;
+    }
+
+    .button__link {
+        font-size: 36px;
+        line-height: 46.8px;
+    }
+}
+
+@media only screen and (min-width: 1200px) {
+    .button {
+        margin-top: 50px;
+    }
+
+    .main-content__text {
+        font-size: 36px;
+        line-height: 54px;
+    }
+}
