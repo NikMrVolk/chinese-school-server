@@ -151,12 +151,16 @@ export class AuthController {
 
         await this.authService.deleteSessionWithUserIdAndRefreshToken(currentUser.id, refreshTokenFromCookies)
         this.removeRefreshTokenFromResponse(res)
+
+        return true
     }
 
     @HttpCode(200)
     @Post('logout/auto')
     async autoLogout(@Res({ passthrough: true }) res: Response) {
         this.removeRefreshTokenFromResponse(res)
+
+        return true
     }
 
     private addRefreshTokenToResponse(res: Response, refreshToken: string, rememberMe: boolean = false) {
