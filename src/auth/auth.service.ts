@@ -3,11 +3,11 @@ import { JwtService } from '@nestjs/jwt'
 import { Response } from 'express'
 import * as bcrypt from 'bcrypt'
 import { UsersService } from 'src/users/users.service'
-import { LoginDto } from './dto/login.dto'
+import { LoginDto, LoginWithOtpDto } from './dto/login.dto'
 import { RegistrationDto, RegistrationStudentDto, RegistrationTeacherDto } from './dto/registration.dto'
-import { Role, User } from '@prisma/client'
+import { Otp, Role, User } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
-import { createOtpCode, hashValue } from 'src/utils/helpers'
+import { compareHash, createOtpCode, hashValue } from 'src/utils/helpers'
 import { MailsService } from 'src/mails/mails.service'
 
 @Injectable()
@@ -42,6 +42,7 @@ export class AuthService {
     private async isUserAdminAndSendOtp(user: Partial<User>) {
         if (user.role === Role.ADMIN) {
             const otp = createOtpCode(this.QUANTITY_NUMBERS_IN_OTP)
+            console.log(otp)
             this.mailsService.sendOtpCode(user.email, otp.toString())
             await this.createOtpToUser(user.id, otp.toString())
             return true
@@ -76,6 +77,62 @@ export class AuthService {
                 },
             },
         })
+    }
+
+    async loginWithOtp(dto: LoginWithOtpDto) {
+        const user = await this.usersService.getFullUserInfo(null, dto.email)
+
+        if (!user) throw new NotFoundException('Пользователь не найден')
+
+        const otp = user.otps[0]
+
+        if (!otp) throw new NotFoundException('У пользователя отсутствует код подтверждения')
+
+        await this.checkOtp(user, otp, dto.otp)
+
+        await this.prisma.otp.deleteMany({
+            where: {
+                userId: user.id,
+            },
+        })
+
+        const tokens = await this.issueTokens(user.id, user.role)
+
+        return {
+            user,
+            ...tokens,
+        }
+    }
+
+    private async checkOtp(user: Partial<User>, otp: Otp, otpToCheck: string) {
+        const isValid = await compareHash(otpToCheck, otp.code)
+
+        if (!isValid) {
+            if (otp.attempts >= 5) {
+                await this.prisma.otp.delete({
+                    where: {
+                        id: otp.id,
+                    },
+                })
+
+                this.isUserAdminAndSendOtp(user)
+
+                throw new UnauthorizedException('Вам на почту отправлен новый код')
+            }
+
+            await this.prisma.otp.update({
+                where: {
+                    id: otp.id,
+                },
+                data: {
+                    attempts: {
+                        increment: 1,
+                    },
+                },
+            })
+
+            throw new UnauthorizedException('Неверный код подтверждения')
+        }
     }
 
     async registrationAdmin(dto: RegistrationDto) {

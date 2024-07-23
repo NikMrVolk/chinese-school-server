@@ -1,7 +1,7 @@
 import { Body, Controller, ForbiddenException, HttpCode, Post, Req, Res, UnauthorizedException } from '@nestjs/common'
 import { Request, Response } from 'express'
 import { AuthService } from './auth.service'
-import { LoginDto } from './dto/login.dto'
+import { LoginDto, LoginWithOtpDto } from './dto/login.dto'
 import { RegistrationDto, RegistrationStudentDto, RegistrationTeacherDto } from './dto/registration.dto'
 import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { User } from '@prisma/client'
@@ -24,6 +24,16 @@ export class AuthController {
         }
 
         const { refreshToken, ...response } = userWithTokenOrOtp
+
+        this.authService.addRefreshTokenToResponse(res, refreshToken)
+
+        return response
+    }
+
+    @HttpCode(200)
+    @Post('otp')
+    async loginOtp(@Body() dto: LoginWithOtpDto, @Res({ passthrough: true }) res: Response) {
+        const { refreshToken, ...response } = await this.authService.loginWithOtp(dto)
 
         this.authService.addRefreshTokenToResponse(res, refreshToken)
 

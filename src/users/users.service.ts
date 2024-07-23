@@ -225,16 +225,18 @@ export class UsersService {
         })
     }
 
-    async getFullUserInfo(id: number) {
+    async getFullUserInfo(id: number, email?: string) {
         return this.prisma.user.findUnique({
             where: {
-                id,
+                ...(id && { id }),
+                ...(email && { email }),
             },
             select: {
                 email: true,
                 id: true,
                 role: true,
                 profile: this.generateProfileSelectObject(),
+                otps: true,
                 student: {
                     select: {
                         id: true,
@@ -329,6 +331,7 @@ export class UsersService {
                 id: userId,
             },
             data: {
+                email: dto.email,
                 profile: {
                     update: {
                         name: dto.name,
