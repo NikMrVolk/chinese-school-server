@@ -9,6 +9,9 @@ import { TariffsService } from 'src/tariffs/tariffs.service'
 
 @Controller('auth')
 export class AuthController {
+    REFRESH_TOKEN_NAME = 'refreshToken'
+    REMEMBER_ME_COOKIE_NAME = 'rememberMe'
+
     constructor(
         private readonly authService: AuthService,
         private readonly tariffsService: TariffsService
@@ -25,7 +28,7 @@ export class AuthController {
 
         const { refreshToken, ...response } = userWithTokenOrOtp
 
-        this.authService.addRefreshTokenToResponse(res, refreshToken)
+        this.addRefreshTokenToResponse(res, refreshToken, dto.rememberMe)
 
         return response
     }
@@ -35,7 +38,7 @@ export class AuthController {
     async loginOtp(@Body() dto: LoginWithOtpDto, @Res({ passthrough: true }) res: Response) {
         const { refreshToken, ...response } = await this.authService.loginWithOtp(dto)
 
-        this.authService.addRefreshTokenToResponse(res, refreshToken)
+        this.addRefreshTokenToResponse(res, refreshToken, dto.rememberMe)
 
         return response
     }
@@ -52,17 +55,12 @@ export class AuthController {
     @Admin()
     @HttpCode(200)
     @Post('registration/admin')
-    async register(
-        @Body() dto: RegistrationDto,
-        @Res({ passthrough: true }) res: Response,
-        @CurrentUser() currentUser: User
-    ) {
+    async register(@Body() dto: RegistrationDto, @CurrentUser() currentUser: User) {
         if (currentUser.email !== process.env.MAIN_ADMIN_EMAIL) {
             throw new ForbiddenException('С вашего аккаунта такое действие недоступно')
         }
 
         const { refreshToken, ...response } = await this.authService.registrationAdmin(dto)
-        this.authService.addRefreshTokenToResponse(res, refreshToken)
         return response
     }
 
@@ -83,44 +81,83 @@ export class AuthController {
     // todo после реализации оплаты продумать как делается пользователь
     @HttpCode(200)
     @Post('registration/student/id')
-    async registrationStudent(@Body() dto: RegistrationStudentDto, @Res({ passthrough: true }) res: Response) {
+    async registrationStudent(@Body() dto: RegistrationStudentDto) {
         const { refreshToken, ...response } = await this.authService.registrationStudent(dto)
-        this.authService.addRefreshTokenToResponse(res, refreshToken)
         return response
     }
 
     @HttpCode(200)
     @Post('registration/teacher')
-    async registrationTeacher(@Body() dto: RegistrationTeacherDto, @Res({ passthrough: true }) res: Response) {
+    async registrationTeacher(@Body() dto: RegistrationTeacherDto) {
         const { refreshToken, ...response } = await this.authService.registrationTeacher(dto)
-        this.authService.addRefreshTokenToResponse(res, refreshToken)
         return response
     }
-
-    // @HttpCode(200)
-    // @Post('otp')
-    // async otp(@Body() dto: { code: string }, @Res({ passthrough: true }) res: Response) {}
 
     @HttpCode(200)
     @Post('access-token')
     async getNewTokens(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-        const refreshTokenFromCookies = req.cookies[this.authService.REFRESH_TOKEN_NAME]
+        const refreshTokenFromCookies = req.cookies[this.REFRESH_TOKEN_NAME]
+        const rememberMe = req.cookies[this.REMEMBER_ME_COOKIE_NAME] === 'true'
 
         if (!refreshTokenFromCookies) {
-            this.authService.removeRefreshTokenFromResponse(res)
+            this.removeRefreshTokenFromResponse(res)
             throw new UnauthorizedException('Refresh token not passed')
         }
 
         const { refreshToken, ...response } = await this.authService.getNewTokens(refreshTokenFromCookies)
-        this.authService.addRefreshTokenToResponse(res, refreshToken)
+        this.addRefreshTokenToResponse(res, refreshToken, rememberMe)
         return response
     }
 
     @HttpCode(200)
     @Post('logout')
     async logout(@Res({ passthrough: true }) res: Response) {
-        this.authService.removeRefreshTokenFromResponse(res)
+        this.removeRefreshTokenFromResponse(res)
 
         return true
+    }
+
+    private addRefreshTokenToResponse(res: Response, refreshToken: string, rememberMe: boolean = false) {
+        const expiresIn = new Date()
+        if (rememberMe) {
+            expiresIn.setDate(expiresIn.getDate() + 30)
+
+            res.cookie(this.REMEMBER_ME_COOKIE_NAME, 'true', {
+                httpOnly: true,
+                domain: process.env.CLIENT_HOST,
+                expires: expiresIn,
+                secure: true,
+                sameSite: process.env.SAME_SITE_COOKIE as 'none' | 'lax' | 'strict' | 'none',
+            })
+        } else {
+            expiresIn.setHours(expiresIn.getHours() + 8)
+        }
+
+        res.cookie(this.REFRESH_TOKEN_NAME, refreshToken, {
+            httpOnly: true,
+            // todo change to variables
+            domain: process.env.CLIENT_HOST,
+            expires: expiresIn,
+            secure: true,
+            sameSite: process.env.SAME_SITE_COOKIE as 'none' | 'lax' | 'strict' | 'none',
+        })
+    }
+
+    private removeRefreshTokenFromResponse(res: Response) {
+        res.cookie(this.REFRESH_TOKEN_NAME, '', {
+            httpOnly: true,
+            domain: process.env.CLIENT_HOST,
+            expires: new Date(0),
+            secure: true,
+            sameSite: process.env.SAME_SITE_COOKIE as 'none' | 'lax' | 'strict' | 'none',
+        })
+
+        res.cookie(this.REMEMBER_ME_COOKIE_NAME, false, {
+            httpOnly: true,
+            domain: process.env.CLIENT_HOST,
+            expires: new Date(0),
+            secure: true,
+            sameSite: process.env.SAME_SITE_COOKIE as 'none' | 'lax' | 'strict' | 'none',
+        })
     }
 }

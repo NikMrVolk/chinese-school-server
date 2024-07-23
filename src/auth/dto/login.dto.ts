@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator'
+import { IsBoolean, IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator'
 
 export class LoginDto {
     @IsEmail({}, { message: 'Неверный формат почты' })
@@ -11,6 +11,9 @@ export class LoginDto {
         message: 'Неверный формат пароля',
     })
     password: string
+
+    @IsBoolean({ message: `Неверный формат поля "Запомнить меня"` })
+    rememberMe: boolean
 }
 
 export class LoginWithOtpDto extends LoginDto {

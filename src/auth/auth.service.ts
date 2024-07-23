@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
-import { Response } from 'express'
 import * as bcrypt from 'bcrypt'
 import { UsersService } from 'src/users/users.service'
 import { LoginDto, LoginWithOtpDto } from './dto/login.dto'
@@ -12,8 +11,6 @@ import { MailsService } from 'src/mails/mails.service'
 
 @Injectable()
 export class AuthService {
-    EXPIRE_DAY_REFRESH_TOKEN = 1
-    REFRESH_TOKEN_NAME = 'refreshToken'
     QUANTITY_NUMBERS_IN_OTP = 4
 
     constructor(
@@ -31,7 +28,7 @@ export class AuthService {
             return { otp: true }
         }
 
-        const tokens = await this.issueTokens(user.id, user.role)
+        const tokens = await this.issueTokens(user.id, user.role, dto.rememberMe)
 
         return {
             user,
@@ -237,15 +234,15 @@ export class AuthService {
         }
     }
 
-    private async issueTokens(userId: number, role: Role = Role.STUDENT) {
+    private async issueTokens(userId: number, role: Role = Role.STUDENT, rememberMe: boolean = false) {
         const data = { id: userId, role }
 
         const accessToken = this.jwt.sign(data, {
-            expiresIn: '1h',
+            expiresIn: '15m',
         })
 
         const refreshToken = this.jwt.sign(data, {
-            expiresIn: '7d',
+            expiresIn: `${rememberMe ? '30d' : '8h'}`,
         })
 
         return { accessToken, refreshToken }
@@ -288,34 +285,6 @@ export class AuthService {
                     },
                 },
             },
-        })
-    }
-
-    addRefreshTokenToResponse(res: Response, refreshToken: string) {
-        const expiresIn = new Date()
-        expiresIn.setDate(expiresIn.getDate() + this.EXPIRE_DAY_REFRESH_TOKEN)
-
-        res.cookie(this.REFRESH_TOKEN_NAME, refreshToken, {
-            httpOnly: true,
-            // todo change to variables
-            domain: process.env.CLIENT_HOST,
-            expires: expiresIn,
-            // true if production
-            secure: true,
-            // lax if production
-            sameSite: process.env.SAME_SITE_COOKIE as 'none' | 'lax' | 'strict' | 'none',
-        })
-    }
-
-    removeRefreshTokenFromResponse(res: Response) {
-        res.cookie(this.REFRESH_TOKEN_NAME, '', {
-            httpOnly: true,
-            domain: process.env.CLIENT_HOST,
-            expires: new Date(0),
-            // true if production
-            secure: true,
-            // lax if production
-            sameSite: process.env.SAME_SITE_COOKIE as 'none' | 'lax' | 'strict' | 'none',
         })
     }
 }
