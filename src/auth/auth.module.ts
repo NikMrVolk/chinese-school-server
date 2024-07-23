@@ -8,7 +8,7 @@ import { AuthService } from './auth.service'
 import { JwtStrategy } from './jwt.strategy'
 import { UsersModule } from 'src/users/users.module'
 import { TariffsModule } from 'src/tariffs/tariffs.module'
-import { MailsModule } from 'src/mails/Mails.module'
+import { MailsModule } from 'src/mails/mails.module'
 
 @Module({
     controllers: [AuthController],
