@@ -39,7 +39,9 @@ export class AuthController {
         })
         this.addRefreshTokenToResponse(res, refreshToken, dto.rememberMe)
 
-        return response
+        const { otps, session, passwordReset, ...userToResponse } = response.user
+
+        return { ...userToResponse, accessToken: response.accessToken }
     }
 
     @HttpCode(200)
@@ -55,7 +57,9 @@ export class AuthController {
         })
         this.addRefreshTokenToResponse(res, refreshToken, dto.rememberMe)
 
-        return response
+        const { otps, session, password, passwordReset, ...userToResponse } = response.user
+
+        return { ...userToResponse, accessToken: response.accessToken }
     }
 
     @HttpCode(200)
