@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt'
 import { UsersService } from 'src/users/users.service'
 import { LoginDto, LoginWithOtpDto } from './dto/login.dto'
 import { RegistrationDto, RegistrationStudentDto, RegistrationTeacherDto } from './dto/registration.dto'
-import { Otp, Role, User } from '@prisma/client'
+import { Otp, Role, Session, User } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
 import { compareHash, createOtpCode, generateRandomPassword, hashValue } from 'src/utils/helpers'
 import { MailsService } from 'src/mails/mails.service'
@@ -12,6 +12,7 @@ import { MailsService } from 'src/mails/mails.service'
 @Injectable()
 export class AuthService {
     QUANTITY_NUMBERS_IN_OTP = 4
+    MAX_QUANTITY_SESSIONS = 3
 
     constructor(
         private jwt: JwtService,
@@ -36,10 +37,93 @@ export class AuthService {
         }
     }
 
+    async createSession({
+        userId,
+        sessions,
+        refreshToken,
+        rememberMe,
+    }: {
+        userId: number
+        sessions: Session[]
+        refreshToken: string
+        rememberMe: boolean
+    }) {
+        if (sessions.length >= this.MAX_QUANTITY_SESSIONS) {
+            await this.prisma.session.delete({
+                where: {
+                    id: sessions[0].id,
+                },
+            })
+        }
+
+        await this.prisma.user.update({
+            where: {
+                id: userId,
+            },
+            data: {
+                session: {
+                    create: {
+                        refreshToken,
+                        expiredIn: new Date(Date.now() + 1000 * 60 * 60 * (rememberMe ? 24 * 30 : 8)),
+                    },
+                },
+            },
+        })
+    }
+
+    async checkSession(userId: number, refreshToken: string) {
+        const sessions = await this.prisma.session.findMany({
+            where: {
+                userId,
+            },
+        })
+
+        if (sessions.length === 0) {
+            return false
+        }
+
+        const currentSession = sessions.find(session => session.refreshToken === refreshToken)
+
+        if (!currentSession) {
+            return false
+        }
+
+        if (currentSession.expiredIn.getDate() > Date.now()) {
+            await this.prisma.session.delete({
+                where: {
+                    id: currentSession.id,
+                },
+            })
+
+            return false
+        }
+
+        return currentSession.id
+    }
+
+    async addNewTokenToSession(sessionId: number, refreshToken: string) {
+        await this.prisma.session.update({
+            where: {
+                id: sessionId,
+            },
+            data: {
+                refreshToken,
+            },
+        })
+    }
+
+    async deleteSessionWithUserIdAndRefreshToken(userId: number, refreshToken: string) {
+        await this.prisma.session.deleteMany({
+            where: {
+                userId,
+                refreshToken,
+            },
+        })
+    }
+
     private async isUserAdminAndSendOtp(user: Partial<User>) {
         if (user.role === Role.ADMIN) {
             const otp = createOtpCode(this.QUANTITY_NUMBERS_IN_OTP)
-            console.log(otp)
             this.mailsService.sendOtpCode(user.email, otp.toString())
             await this.createOtpToUser(user.id, otp.toString())
             return true
@@ -78,11 +162,9 @@ export class AuthService {
 
     async loginWithOtp(dto: LoginWithOtpDto) {
         const user = await this.usersService.getFullUserInfo(null, dto.email)
-
         if (!user) throw new NotFoundException('Пользователь не найден')
 
         const otp = user.otps[0]
-
         if (!otp) throw new NotFoundException('У пользователя отсутствует код подтверждения')
 
         await this.checkOtp(user, otp, dto.otp)
@@ -140,9 +222,7 @@ export class AuthService {
         const passwordResetNote = user.passwordReset[0]
 
         if (passwordResetNote) {
-            const currentDate = new Date()
-
-            if (passwordResetNote.createdAt.getTime() + 1000 * 60 > currentDate.getTime()) {
+            if (passwordResetNote.createdAt.getTime() + 1000 * 60 > new Date().getTime()) {
                 throw new BadRequestException('Повторно получить новый пароль можно через 1 минуту')
             }
 

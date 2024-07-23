@@ -6,6 +6,8 @@ import { RegistrationDto, RegistrationStudentDto, RegistrationTeacherDto } from 
 import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { User } from '@prisma/client'
 import { TariffsService } from 'src/tariffs/tariffs.service'
+import { JwtService } from '@nestjs/jwt'
+import { JwtPayload } from 'src/utils/types'
 
 @Controller('auth')
 export class AuthController {
@@ -14,7 +16,8 @@ export class AuthController {
 
     constructor(
         private readonly authService: AuthService,
-        private readonly tariffsService: TariffsService
+        private readonly tariffsService: TariffsService,
+        private jwt: JwtService
     ) {}
 
     @HttpCode(200)
@@ -28,6 +31,12 @@ export class AuthController {
 
         const { refreshToken, ...response } = userWithTokenOrOtp
 
+        await this.authService.createSession({
+            userId: response.user.id,
+            sessions: response.user.session,
+            refreshToken,
+            rememberMe: dto.rememberMe,
+        })
         this.addRefreshTokenToResponse(res, refreshToken, dto.rememberMe)
 
         return response
@@ -38,6 +47,12 @@ export class AuthController {
     async loginOtp(@Body() dto: LoginWithOtpDto, @Res({ passthrough: true }) res: Response) {
         const { refreshToken, ...response } = await this.authService.loginWithOtp(dto)
 
+        await this.authService.createSession({
+            userId: response.user.id,
+            sessions: response.user.session,
+            refreshToken,
+            rememberMe: dto.rememberMe,
+        })
         this.addRefreshTokenToResponse(res, refreshToken, dto.rememberMe)
 
         return response
@@ -104,17 +119,44 @@ export class AuthController {
             throw new UnauthorizedException('Refresh token not passed')
         }
 
+        let userId: number
+        try {
+            userId = this.jwt.decode<JwtPayload>(refreshTokenFromCookies)?.id
+        } catch (error) {
+            console.error(error)
+        }
+
+        if (!userId) {
+            this.removeRefreshTokenFromResponse(res)
+            throw new UnauthorizedException('Invalid refresh token')
+        }
+
+        const sessionId = await this.authService.checkSession(userId, refreshTokenFromCookies)
+        if (!sessionId) {
+            this.removeRefreshTokenFromResponse(res)
+            throw new UnauthorizedException('Invalid refresh token')
+        }
+
         const { refreshToken, ...response } = await this.authService.getNewTokens(refreshTokenFromCookies)
+        await this.authService.addNewTokenToSession(sessionId, refreshToken)
         this.addRefreshTokenToResponse(res, refreshToken, rememberMe)
         return response
     }
 
+    @Auth()
     @HttpCode(200)
     @Post('logout')
-    async logout(@Res({ passthrough: true }) res: Response) {
-        this.removeRefreshTokenFromResponse(res)
+    async userLogout(@Req() req: Request, @Res({ passthrough: true }) res: Response, @CurrentUser() currentUser: User) {
+        const refreshTokenFromCookies = req.cookies[this.REFRESH_TOKEN_NAME]
 
-        return true
+        await this.authService.deleteSessionWithUserIdAndRefreshToken(currentUser.id, refreshTokenFromCookies)
+        this.removeRefreshTokenFromResponse(res)
+    }
+
+    @HttpCode(200)
+    @Post('logout/auto')
+    async autoLogout(@Res({ passthrough: true }) res: Response) {
+        this.removeRefreshTokenFromResponse(res)
     }
 
     private addRefreshTokenToResponse(res: Response, refreshToken: string, rememberMe: boolean = false) {
