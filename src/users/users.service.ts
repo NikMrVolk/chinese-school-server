@@ -371,7 +371,7 @@ export class UsersService {
         })
     }
 
-    private async validateEmail(email: string) {
+    async validateEmail(email: string) {
         const user = await this.prisma.user.findUnique({
             where: {
                 email,

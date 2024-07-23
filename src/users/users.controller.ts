@@ -5,6 +5,7 @@ import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { Role, User } from '@prisma/client'
 import { Response } from 'express'
 import { ChangeProfileDto } from './dto/ChangeProfile.dto'
+import { CheckEmailDto } from './dto/CheckEmail.dto'
 
 @Controller('users')
 export class UsersController {
@@ -53,5 +54,13 @@ export class UsersController {
             currentUser,
             dto,
         })
+    }
+
+    @Auth()
+    @Admin()
+    @HttpCode(200)
+    @Post('email')
+    async deleteUser(@Body() dto: CheckEmailDto) {
+        await this.usersService.validateEmail(dto.email)
     }
 }
