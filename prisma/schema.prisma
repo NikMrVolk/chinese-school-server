@@ -94,7 +94,6 @@ model PasswordReset {
     updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
     newPassword String @map("new_password")
-    attempts    Int
 
     userId Int  @map("user_id")
     User   User @relation(map: "user", fields: [userId], references: [id], onDelete: Cascade)

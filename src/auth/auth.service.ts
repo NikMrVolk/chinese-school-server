@@ -7,7 +7,7 @@ import { LoginDto, LoginWithOtpDto } from './dto/login.dto'
 import { RegistrationDto, RegistrationStudentDto, RegistrationTeacherDto } from './dto/registration.dto'
 import { Otp, Role, User } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
-import { compareHash, createOtpCode, hashValue } from 'src/utils/helpers'
+import { compareHash, createOtpCode, generateRandomPassword, hashValue } from 'src/utils/helpers'
 import { MailsService } from 'src/mails/mails.service'
 
 @Injectable()
@@ -135,6 +135,44 @@ export class AuthService {
         }
     }
 
+    async createPasswordReset(email: string) {
+        const user = await this.usersService.getFullUserInfo(null, email)
+
+        if (!user) throw new NotFoundException('Пользователь не найден')
+
+        const passwordResetNote = user.passwordReset[0]
+
+        if (passwordResetNote) {
+            const currentDate = new Date()
+
+            if (passwordResetNote.createdAt.getTime() + 1000 * 60 > currentDate.getTime()) {
+                throw new BadRequestException('Повторно получить новый пароль можно через 1 минуту')
+            }
+
+            await this.prisma.passwordReset.deleteMany({
+                where: {
+                    userId: user.id,
+                },
+            })
+        }
+
+        const newPassword = generateRandomPassword(12, 15)
+        this.mailsService.sendForgotPasswordMail(email, newPassword)
+
+        await this.prisma.user.update({
+            where: {
+                id: user.id,
+            },
+            data: {
+                passwordReset: {
+                    create: {
+                        newPassword: await hashValue(newPassword),
+                    },
+                },
+            },
+        })
+    }
+
     async registrationAdmin(dto: RegistrationDto) {
         const oldUser = await this.usersService.getByEmail(dto.email)
 
@@ -214,15 +252,43 @@ export class AuthService {
     }
 
     private async validateUser(dto: LoginDto) {
-        const user = await this.usersService.getByEmail(dto.email)
+        const user = await this.usersService.getFullUserInfo(null, dto.email)
 
         if (!user) throw new NotFoundException('Не верный логин или пароль')
+
+        const newPasswordNote = user.passwordReset[0]
+
+        if (newPasswordNote) {
+            const isNewPasswordValid = await compareHash(dto.password, newPasswordNote.newPassword)
+
+            if (isNewPasswordValid) {
+                await this.updateUserPasswordAndDeleteResetPasswordNote(user.id, dto.password)
+
+                return user
+            }
+        }
 
         const isValid = await bcrypt.compare(dto.password, user.password)
 
         if (!isValid) throw new UnauthorizedException('Не верный логин или пароль')
 
         return user
+    }
+
+    private async updateUserPasswordAndDeleteResetPasswordNote(userId: number, password: string) {
+        await this.prisma.user.update({
+            where: {
+                id: userId,
+            },
+            data: {
+                password: await hashValue(password),
+                passwordReset: {
+                    deleteMany: {
+                        userId,
+                    },
+                },
+            },
+        })
     }
 
     addRefreshTokenToResponse(res: Response, refreshToken: string) {

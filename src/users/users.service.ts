@@ -237,6 +237,8 @@ export class UsersService {
                 role: true,
                 profile: this.generateProfileSelectObject(),
                 otps: true,
+                password: true,
+                passwordReset: true,
                 student: {
                     select: {
                         id: true,

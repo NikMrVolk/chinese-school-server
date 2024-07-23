@@ -40,6 +40,14 @@ export class AuthController {
         return response
     }
 
+    @HttpCode(200)
+    @Post('forgot-password')
+    async forgotPassword(@Body() dto: { email: string }) {
+        await this.authService.createPasswordReset(dto.email)
+
+        return { message: 'Новый пароль отправлен на почту' }
+    }
+
     @Auth()
     @Admin()
     @HttpCode(200)
