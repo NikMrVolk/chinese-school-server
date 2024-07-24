@@ -125,8 +125,6 @@ export class UsersService {
             fileName = await this.filesService.createFile(avatar)
         }
 
-        console.log(avatar, fileName)
-
         return this.prisma.user.create({
             data: {
                 email: dto.email,
