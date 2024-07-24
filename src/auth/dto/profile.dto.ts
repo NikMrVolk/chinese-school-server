@@ -1,4 +1,4 @@
-import { IsDateString, IsNotEmpty, IsString, MinLength } from 'class-validator'
+import { IsNotEmpty, IsString, MinLength } from 'class-validator'
 
 export class ProfileDto {
     @MinLength(2, { message: 'Имя должно быть больше 2х символов' })
@@ -21,10 +21,6 @@ export class ProfileDto {
     @IsString({ message: 'Введите телеграм' })
     telegram: string
 
-    @IsNotEmpty({ message: 'Загрузите аватар пользователя' })
-    @IsString({ message: 'Неверный формат аватара' })
-    avatar: string
-
-    @IsDateString({}, { each: true, message: 'Неверный формат даты рождения' })
-    birthday: Date
+    // @IsDateString({}, { each: true, message: 'Неверный формат даты рождения' })
+    // birthday: Date
 }

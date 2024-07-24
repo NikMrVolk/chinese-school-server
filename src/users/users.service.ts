@@ -6,10 +6,16 @@ import { Role, User } from '@prisma/client'
 import { generateRandomPassword } from 'src/utils/helpers'
 import { ProfileDto } from 'src/auth/dto/profile.dto'
 import { ChangeProfileDto } from './dto/ChangeProfile.dto'
+import { MailsService } from 'src/mails/mails.service'
+import { FilesService } from 'src/files/files.service'
 
 @Injectable()
 export class UsersService {
-    constructor(private prisma: PrismaService) {}
+    constructor(
+        private mailsService: MailsService,
+        private prisma: PrismaService,
+        private filesService: FilesService
+    ) {}
 
     async getCurrentUser({ currentUser, searchedUserId }: { currentUser: User; searchedUserId: number }) {
         if (!searchedUserId || !currentUser) {
@@ -111,16 +117,32 @@ export class UsersService {
         })
     }
 
-    async createAdmin(dto: RegistrationDto) {
+    async createAdmin(dto: RegistrationDto, avatar?: Express.Multer.File) {
         const password = generateRandomPassword(12, 15)
-        console.log(password)
+        this.mailsService.sendRegistrationMail(dto.email, password)
+        let fileName: string
+        if (avatar) {
+            fileName = await this.filesService.createFile(avatar)
+        }
+
+        console.log(avatar, fileName)
 
         return this.prisma.user.create({
             data: {
                 email: dto.email,
                 password: await bcrypt.hash(password, 7),
-                role: dto.role,
-                profile: this.generateProfileCreateObject(dto),
+                role: Role.ADMIN,
+                profile: {
+                    create: {
+                        name: dto.name,
+                        surname: dto.surname,
+                        patronymic: dto.patronymic,
+                        phone: dto.phone,
+                        telegram: dto.telegram,
+                        ...(avatar && { avatar: fileName }),
+                        // birthday: dto.birthday,
+                    },
+                },
             },
             select: {
                 email: true,
@@ -172,7 +194,7 @@ export class UsersService {
             data: {
                 email: dto.email,
                 password: await bcrypt.hash(password, 7),
-                role: dto.role,
+                role: Role.TEACHER,
                 profile: this.generateProfileCreateObject(dto),
                 teacher: {
                     create: {
@@ -302,10 +324,12 @@ export class UsersService {
         currentUser,
         changeUserId,
         dto,
+        avatar,
     }: {
         currentUser: User
         changeUserId: number
         dto: ChangeProfileDto
+        avatar?: Express.Multer.File
     }) {
         const changeUser = await this.getFullUserInfo(changeUserId)
 
@@ -317,18 +341,31 @@ export class UsersService {
             await this.validateEmail(dto.email)
         }
 
+        const currentUserAvatar = changeUser.profile.avatar
         if (changeUser.id === currentUser.id) {
-            return this.updateUserProfile(changeUserId, dto)
+            return this.updateUserProfile(changeUserId, dto, avatar, currentUserAvatar)
         }
-
         if (currentUser.role === Role.ADMIN) {
-            return this.updateUserProfile(changeUserId, dto)
+            return this.updateUserProfile(changeUserId, dto, avatar, currentUserAvatar)
         }
 
         throw new BadRequestException('Не удалось изменить данные')
     }
 
-    private async updateUserProfile(userId: number, dto: ChangeProfileDto) {
+    private async updateUserProfile(
+        userId: number,
+        dto: ChangeProfileDto,
+        avatar?: Express.Multer.File,
+        currentUserAvatar?: string
+    ) {
+        let fileName: string
+        if (avatar) {
+            if (currentUserAvatar) {
+                await this.filesService.deleteFile(currentUserAvatar)
+            }
+            fileName = await this.filesService.createFile(avatar)
+        }
+
         return await this.prisma.user.update({
             where: {
                 id: userId,
@@ -342,6 +379,7 @@ export class UsersService {
                         patronymic: dto.patronymic,
                         phone: dto.phone,
                         telegram: dto.telegram,
+                        ...(avatar && { avatar: fileName }),
                     },
                 },
             },
@@ -389,8 +427,8 @@ export class UsersService {
                 patronymic: dto.patronymic,
                 phone: dto.phone,
                 telegram: dto.telegram,
-                avatar: dto.avatar,
-                birthday: dto.birthday,
+                // avatar: dto.avatar,
+                // birthday: dto.birthday,
             },
         }
     }

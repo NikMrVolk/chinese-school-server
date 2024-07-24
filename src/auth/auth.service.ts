@@ -250,12 +250,12 @@ export class AuthService {
         })
     }
 
-    async registrationAdmin(dto: RegistrationDto) {
+    async registrationAdmin(dto: RegistrationDto, avatar?: Express.Multer.File) {
         const oldUser = await this.usersService.getByEmail(dto.email)
 
         if (oldUser) throw new BadRequestException(`Пользователь с почтой ${dto.email} уже существует`)
 
-        const { password, ...user } = await this.usersService.createAdmin(dto)
+        const { password, ...user } = await this.usersService.createAdmin(dto, avatar)
 
         const { refreshToken } = await this.issueTokens(user.id, user.role)
 

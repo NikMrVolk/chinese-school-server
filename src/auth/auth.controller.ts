@@ -1,4 +1,15 @@
-import { Body, Controller, ForbiddenException, HttpCode, Post, Req, Res, UnauthorizedException } from '@nestjs/common'
+import {
+    Body,
+    Controller,
+    ForbiddenException,
+    HttpCode,
+    Post,
+    Req,
+    Res,
+    UnauthorizedException,
+    UploadedFile,
+    UseInterceptors,
+} from '@nestjs/common'
 import { Request, Response } from 'express'
 import { AuthService } from './auth.service'
 import { LoginDto, LoginWithOtpDto } from './dto/login.dto'
@@ -8,6 +19,7 @@ import { User } from '@prisma/client'
 import { TariffsService } from 'src/tariffs/tariffs.service'
 import { JwtService } from '@nestjs/jwt'
 import { JwtPayload } from 'src/utils/types'
+import { FileInterceptor } from '@nestjs/platform-express'
 
 @Controller('auth')
 export class AuthController {
@@ -41,7 +53,7 @@ export class AuthController {
 
         const { otps, session, passwordReset, ...userToResponse } = response.user
 
-        return { ...userToResponse, accessToken: response.accessToken }
+        return { user: userToResponse, accessToken: response.accessToken }
     }
 
     @HttpCode(200)
@@ -59,7 +71,7 @@ export class AuthController {
 
         const { otps, session, password, passwordReset, ...userToResponse } = response.user
 
-        return { ...userToResponse, accessToken: response.accessToken }
+        return { user: userToResponse, accessToken: response.accessToken }
     }
 
     @HttpCode(200)
@@ -73,13 +85,18 @@ export class AuthController {
     @Auth()
     @Admin()
     @HttpCode(200)
+    @UseInterceptors(FileInterceptor('avatar'))
     @Post('registration/admin')
-    async register(@Body() dto: RegistrationDto, @CurrentUser() currentUser: User) {
+    async register(
+        @Body() dto: RegistrationDto,
+        @CurrentUser() currentUser: User,
+        @UploadedFile() avatar?: Express.Multer.File
+    ) {
         if (currentUser.email !== process.env.MAIN_ADMIN_EMAIL) {
             throw new ForbiddenException('С вашего аккаунта такое действие недоступно')
         }
 
-        const { refreshToken, ...response } = await this.authService.registrationAdmin(dto)
+        const { refreshToken, ...response } = await this.authService.registrationAdmin(dto, avatar)
         return response
     }
 

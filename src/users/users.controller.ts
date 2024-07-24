@@ -1,11 +1,24 @@
-import { Body, Controller, Get, HttpCode, Param, Patch, Post, Query, Res } from '@nestjs/common'
+import {
+    Body,
+    Controller,
+    Get,
+    HttpCode,
+    Param,
+    Patch,
+    Post,
+    Query,
+    Res,
+    UploadedFile,
+    UseInterceptors,
+} from '@nestjs/common'
 import { UsersService } from './users.service'
 
 import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { Role, User } from '@prisma/client'
-import { Response } from 'express'
+import { Response, Express } from 'express'
 import { ChangeProfileDto } from './dto/ChangeProfile.dto'
 import { CheckEmailDto } from './dto/CheckEmail.dto'
+import { FileInterceptor } from '@nestjs/platform-express'
 
 @Controller('users')
 export class UsersController {
@@ -48,11 +61,18 @@ export class UsersController {
     @Auth()
     @HttpCode(200)
     @Patch('profile/:id')
-    async changeProfile(@Body() dto: ChangeProfileDto, @Param('id') id: string, @CurrentUser() currentUser: User) {
+    @UseInterceptors(FileInterceptor('avatar'))
+    async changeProfile(
+        @Body() dto: ChangeProfileDto,
+        @Param('id') id: string,
+        @CurrentUser() currentUser: User,
+        @UploadedFile() avatar?: Express.Multer.File
+    ) {
         return this.usersService.changeProfile({
-            changeUserId: +id,
             currentUser,
+            changeUserId: +id,
             dto,
+            avatar,
         })
     }
 
