@@ -1,4 +1,5 @@
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator'
+import { IsDateString, IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator'
+import { IsOptionalNonNullable } from 'src/utils/decorators'
 
 export class ChangeProfileDto {
     @IsEmail({}, { message: 'Неверный формат почты' })
@@ -23,4 +24,8 @@ export class ChangeProfileDto {
     @IsNotEmpty({ message: 'Введите телеграм' })
     @IsString({ message: 'Введите телеграм' })
     telegram: string
+
+    @IsOptionalNonNullable()
+    @IsDateString({}, { message: 'Неверный формат даты рождения' })
+    birthday?: Date
 }

@@ -9,20 +9,23 @@ export class RoleGuard implements CanActivate {
 
     canActivate(context: ExecutionContext) {
         const request = context.switchToHttp().getRequest()
-        const token = request.headers.authorization.split(' ')[1]
+        const authorizationHeader = request.headers.authorization
 
-        if (token) {
-            try {
-                const { role } = this.jwt.verify<JwtPayload>(token, {
-                    secret: process.env.JWT_SECRET,
-                })
+        if (authorizationHeader) {
+            const token = authorizationHeader.split(' ')[1]
+            if (token) {
+                try {
+                    const { role } = this.jwt.verify<JwtPayload>(token, {
+                        secret: process.env.JWT_SECRET,
+                    })
 
-                if (role === Role.ADMIN) {
-                    return true
+                    if (role === Role.ADMIN) {
+                        return true
+                    }
+                } catch (e) {
+                    console.error(e)
+                    throw new UnauthorizedException('Invalid token')
                 }
-            } catch (e) {
-                console.error(e)
-                throw new UnauthorizedException('Invalid token')
             }
         }
         throw new UnauthorizedException('Invalid token')
