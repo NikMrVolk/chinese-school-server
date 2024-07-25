@@ -34,7 +34,7 @@ export class FilesService {
             await fs.promises.unlink(filePath)
         } catch (e) {
             console.error(e)
-            throw new HttpException('Произошла ошибка при записи файла', HttpStatus.INTERNAL_SERVER_ERROR)
+            throw new HttpException('Произошла ошибка при удалении файла', HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 }
