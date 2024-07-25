@@ -11,7 +11,7 @@ export class FilesService {
         try {
             const fileExtension = path.extname(file.originalname)
             const fileName = uuid.v4() + fileExtension
-            const filePath = path.resolve(__dirname, '..', '..', 'static')
+            const filePath = path.resolve(__dirname, '..', '..', 'client')
             try {
                 await fs.promises.access(filePath, constants.F_OK)
             } catch (e) {
@@ -30,7 +30,7 @@ export class FilesService {
 
     async deleteFile(fileName: string) {
         try {
-            const filePath = path.resolve(__dirname, '..', '..', 'static', fileName)
+            const filePath = path.resolve(__dirname, '..', '..', 'client', fileName)
             await fs.promises.unlink(filePath)
         } catch (e) {
             console.error(e)
