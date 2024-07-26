@@ -83,4 +83,12 @@ export class UsersController {
     async deleteUser(@Body() dto: CheckEmailDto) {
         await this.usersService.validateEmail(dto.email)
     }
+
+    @Auth()
+    @Admin()
+    @HttpCode(200)
+    @Post('email')
+    async checkEmail(@Body() dto: CheckEmailDto) {
+        await this.usersService.validateEmail(dto.email)
+    }
 }
