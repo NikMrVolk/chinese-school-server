@@ -125,25 +125,23 @@ export class AuthController {
 
     @Admin()
     @HttpCode(200)
-    @Post('registration/student-order')
-    async createOrder(@Body() dto: RegistrationStudentDto) {
-        await this.tariffsService.isTariffActiveAndExist(dto.tariffId)
+    @UseInterceptors(FileInterceptor('avatar'))
+    @Post('registration/student')
+    async createOrder(@Body() dto: RegistrationStudentDto, @UploadedFile() avatar?: Express.Multer.File) {
+        const tariff = await this.tariffsService.isTariffExist(dto.tariffTitle)
 
-        const { refreshToken, ...response } = await this.authService.registrationStudent(dto)
+        const { password, ...user } = await this.usersService.createStudent(dto, tariff, avatar)
 
-        // todo fix deploy error
-        // await this.tariffsService.createPurchase({ student: response.user.student, tariffId: dto.tariffId })
-
-        return response
+        return user
     }
 
     // todo после реализации оплаты продумать как делается пользователь
-    @HttpCode(200)
-    @Post('registration/student/id')
-    async registrationStudent(@Body() dto: RegistrationStudentDto) {
-        const { refreshToken, ...response } = await this.authService.registrationStudent(dto)
-        return response
-    }
+    // @HttpCode(200)
+    // @Post('registration/student/:id')
+    // async registrationStudent(@Body() dto: RegistrationStudentDto) {
+    //     const { refreshToken, ...response } = await this.authService.registrationStudent(dto)
+    //     return response
+    // }
 
     @HttpCode(200)
     @Post('access-token')

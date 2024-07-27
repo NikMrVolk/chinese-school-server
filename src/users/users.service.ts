@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import * as bcrypt from 'bcrypt'
 import { PrismaService } from 'src/prisma.service'
 import { RegistrationDto, RegistrationStudentDto, RegistrationTeacherDto } from '../auth/dto/registration.dto'
-import { Role, User } from '@prisma/client'
+import { Role, Tariff, User } from '@prisma/client'
 import { generateRandomPassword } from 'src/utils/helpers'
 import { ProfileDto } from 'src/auth/dto/profile.dto'
 import { ChangeProfileDto } from './dto/ChangeProfile.dto'
@@ -152,19 +152,48 @@ export class UsersService {
             },
         })
     }
-    async createStudent(dto: RegistrationStudentDto) {
+    async createStudent(dto: RegistrationStudentDto, tariff: Tariff, avatar?: Express.Multer.File) {
         const password = generateRandomPassword(12, 15)
-        console.log('student-password', password)
+        this.mailsService.sendRegistrationMail(dto.email, password)
+
+        let fileName: string
+        if (avatar) {
+            fileName = await this.filesService.createFile(avatar)
+        }
 
         return this.prisma.user.create({
             data: {
                 email: dto.email,
                 password: await bcrypt.hash(password, 7),
-                profile: this.generateProfileCreateObject(dto),
+                profile: {
+                    create: {
+                        name: dto.name,
+                        surname: dto.surname,
+                        patronymic: dto.patronymic,
+                        phone: dto.phone,
+                        telegram: dto.telegram,
+                        birthday: dto.birthday,
+                        ...(avatar && { avatar: fileName }),
+                    },
+                },
                 student: {
                     create: {
                         packageTitle: dto.packageTitle,
                         languageLevel: dto.languageLevel,
+                        purchasedTariffs: {
+                            create: {
+                                title: tariff.title,
+                                price: tariff.price,
+                                quantityHours: tariff.quantityHours,
+                                benefits: tariff.benefits,
+                                quantityWeeksActive: tariff.quantityWeeksActive,
+                                isRescheduleLessons: tariff.isRescheduleLessons,
+                                isPopular: tariff.isPopular,
+                                completedHours: 0,
+                                paymentLink: dto.paymentLink,
+                                paymentStatus: 'IN_PROCESS',
+                            },
+                        },
                     },
                 },
             },

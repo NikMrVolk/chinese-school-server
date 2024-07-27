@@ -76,16 +76,18 @@ export class TariffsService {
     //     })
     // }
 
-    async isTariffActiveAndExist(tariffId: number) {
-        const tariff = await this.prisma.tariff.findUnique({
+    async isTariffExist(tariffTitle: string) {
+        const tariff = await this.prisma.tariff.findFirst({
             where: {
-                id: tariffId,
+                title: tariffTitle,
             },
         })
 
         if (!tariff) {
-            throw new BadRequestException('Тариф не найден')
+            throw new BadRequestException('Тариф с указанным названием не найден')
         }
+
+        return tariff
     }
 
     async update(id: number, dto: TariffDto) {
