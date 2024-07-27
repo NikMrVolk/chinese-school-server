@@ -8,6 +8,7 @@ import { ProfileDto } from 'src/auth/dto/profile.dto'
 import { ChangeProfileDto } from './dto/ChangeProfile.dto'
 import { MailsService } from 'src/mails/mails.service'
 import { FilesService } from 'src/files/files.service'
+import { ChangeTeacherInfoDto } from './dto/changeTeacherInfo.dto'
 
 @Injectable()
 export class UsersService {
@@ -184,22 +185,46 @@ export class UsersService {
         })
     }
 
-    async createTeacher(dto: RegistrationTeacherDto) {
+    async createTeacher(
+        dto: RegistrationTeacherDto,
+        files: { avatar?: Express.Multer.File; youtubeVideoPreviewUrl?: Express.Multer.File }
+    ) {
         const password = generateRandomPassword(12, 15)
-        console.log('teacher-password', password)
+        this.mailsService.sendRegistrationMail(dto.email, password)
+
+        let avatarFileName: string
+        if (files.avatar && files.avatar[0]) {
+            avatarFileName = await this.filesService.createFile(files.avatar[0])
+        }
+        let youtubeVideoPreviewUrlFileName: string
+        if (files.youtubeVideoPreviewUrl && files.youtubeVideoPreviewUrl[0]) {
+            youtubeVideoPreviewUrlFileName = await this.filesService.createFile(files.youtubeVideoPreviewUrl[0])
+        }
 
         return this.prisma.user.create({
             data: {
                 email: dto.email,
                 password: await bcrypt.hash(password, 7),
                 role: Role.TEACHER,
-                profile: this.generateProfileCreateObject(dto),
+                profile: {
+                    create: {
+                        name: dto.name,
+                        surname: dto.surname,
+                        patronymic: dto.patronymic,
+                        phone: dto.phone,
+                        telegram: dto.telegram,
+                        ...(avatarFileName && { avatar: avatarFileName }),
+                        ...(dto.birthday && { birthday: dto.birthday }),
+                    },
+                },
                 teacher: {
                     create: {
-                        experience: dto.experience,
+                        experience: +dto.experience,
                         description: dto.description,
                         youtubeVideoId: dto.youtubeVideoId,
-                        youtubeVideoPreviewUrl: dto.youtubeVideoPreviewUrl,
+                        ...(youtubeVideoPreviewUrlFileName && {
+                            youtubeVideoPreviewUrl: youtubeVideoPreviewUrlFileName,
+                        }),
                     },
                 },
             },
@@ -377,8 +402,8 @@ export class UsersService {
                         patronymic: dto.patronymic,
                         phone: dto.phone,
                         telegram: dto.telegram,
+                        birthday: dto.birthday,
                         ...(avatar && { avatar: fileName }),
-                        ...(dto.birthday && { birthday: dto.birthday }),
                     },
                 },
             },
@@ -404,6 +429,47 @@ export class UsersService {
                         teacherId: true,
                     },
                 },
+            },
+        })
+    }
+
+    async updateTeacherInfo({
+        changeUserId,
+        dto,
+        youtubeVideoPreviewUrl,
+    }: {
+        changeUserId: number
+        dto: ChangeTeacherInfoDto
+        youtubeVideoPreviewUrl?: Express.Multer.File
+    }) {
+        const changeUser = await this.getFullUserInfo(changeUserId)
+        if (!changeUser) throw new BadRequestException('Пользователь не найден')
+
+        let previewFileUrl: string
+        const currentVideoPreviewFileUrl = changeUser.teacher.youtubeVideoPreviewUrl
+        if (youtubeVideoPreviewUrl) {
+            if (currentVideoPreviewFileUrl) {
+                await this.filesService.deleteFile(currentVideoPreviewFileUrl)
+            }
+            previewFileUrl = await this.filesService.createFile(youtubeVideoPreviewUrl)
+        }
+
+        return await this.prisma.teacher.update({
+            where: {
+                id: changeUser.teacher.id,
+            },
+            data: {
+                experience: +dto.experience,
+                description: dto.description,
+                youtubeVideoId: dto.youtubeVideoId,
+                ...(previewFileUrl && { youtubeVideoPreviewUrl: previewFileUrl }),
+            },
+            select: {
+                id: true,
+                experience: true,
+                description: true,
+                youtubeVideoId: true,
+                youtubeVideoPreviewUrl: true,
             },
         })
     }

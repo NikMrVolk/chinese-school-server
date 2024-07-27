@@ -8,6 +8,7 @@ import {
     Res,
     UnauthorizedException,
     UploadedFile,
+    UploadedFiles,
     UseInterceptors,
 } from '@nestjs/common'
 import { Request, Response } from 'express'
@@ -19,7 +20,8 @@ import { User } from '@prisma/client'
 import { TariffsService } from 'src/tariffs/tariffs.service'
 import { JwtService } from '@nestjs/jwt'
 import { JwtPayload } from 'src/utils/types'
-import { FileInterceptor } from '@nestjs/platform-express'
+import { FileFieldsInterceptor, FileInterceptor } from '@nestjs/platform-express'
+import { UsersService } from 'src/users/users.service'
 
 @Controller('auth')
 export class AuthController {
@@ -28,6 +30,7 @@ export class AuthController {
 
     constructor(
         private readonly authService: AuthService,
+        private readonly usersService: UsersService,
         private readonly tariffsService: TariffsService,
         private jwt: JwtService
     ) {}
@@ -96,8 +99,28 @@ export class AuthController {
             throw new ForbiddenException('С вашего аккаунта такое действие недоступно')
         }
 
-        const { refreshToken, ...response } = await this.authService.registrationAdmin(dto, avatar)
+        const response = await this.authService.registrationAdmin(dto, avatar)
         return response
+    }
+
+    @Auth()
+    @Admin()
+    @HttpCode(200)
+    @UseInterceptors(
+        FileFieldsInterceptor([
+            { name: 'avatar', maxCount: 1 },
+            { name: 'youtubeVideoPreviewUrl', maxCount: 1 },
+        ])
+    )
+    @Post('registration/teacher')
+    async registrationTeacher(
+        @Body() dto: RegistrationTeacherDto,
+        @UploadedFiles()
+        files: { avatar?: Express.Multer.File; youtubeVideoPreviewUrl?: Express.Multer.File }
+    ) {
+        const { password, ...user } = await this.usersService.createTeacher(dto, files)
+
+        return user
     }
 
     @Admin()
@@ -119,13 +142,6 @@ export class AuthController {
     @Post('registration/student/id')
     async registrationStudent(@Body() dto: RegistrationStudentDto) {
         const { refreshToken, ...response } = await this.authService.registrationStudent(dto)
-        return response
-    }
-
-    @HttpCode(200)
-    @Post('registration/teacher')
-    async registrationTeacher(@Body() dto: RegistrationTeacherDto) {
-        const { refreshToken, ...response } = await this.authService.registrationTeacher(dto)
         return response
     }
 

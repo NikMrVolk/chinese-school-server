@@ -19,6 +19,7 @@ import { Response, Express } from 'express'
 import { ChangeProfileDto } from './dto/ChangeProfile.dto'
 import { CheckEmailDto } from './dto/CheckEmail.dto'
 import { FileInterceptor } from '@nestjs/platform-express'
+import { ChangeTeacherInfoDto } from './dto/changeTeacherInfo.dto'
 
 @Controller('users')
 export class UsersController {
@@ -61,8 +62,8 @@ export class UsersController {
     @Auth()
     @HttpCode(200)
     @Patch('profile/:id')
-    @UseInterceptors(FileInterceptor('avatar'))
-    async changeProfile(
+    @UseInterceptors(FileInterceptor('youtubeVideoPreviewUrl'))
+    async changeTeacherInfo(
         @Body() dto: ChangeProfileDto,
         @Param('id') id: string,
         @CurrentUser() currentUser: User,
@@ -77,18 +78,26 @@ export class UsersController {
     }
 
     @Auth()
-    @Admin()
     @HttpCode(200)
-    @Post('email')
-    async deleteUser(@Body() dto: CheckEmailDto) {
-        await this.usersService.validateEmail(dto.email)
+    @Patch('teacher/:id')
+    @UseInterceptors(FileInterceptor('youtubeVideoPreviewUrl'))
+    async changeProfile(
+        @Body() dto: ChangeTeacherInfoDto,
+        @Param('id') id: string,
+        @UploadedFile() youtubeVideoPreviewUrl?: Express.Multer.File
+    ) {
+        return this.usersService.updateTeacherInfo({
+            changeUserId: +id,
+            dto,
+            youtubeVideoPreviewUrl,
+        })
     }
 
     @Auth()
     @Admin()
     @HttpCode(200)
     @Post('email')
-    async checkEmail(@Body() dto: CheckEmailDto) {
+    async deleteUser(@Body() dto: CheckEmailDto) {
         await this.usersService.validateEmail(dto.email)
     }
 }
