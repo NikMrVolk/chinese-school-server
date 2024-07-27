@@ -62,7 +62,7 @@ export class UsersController {
     @Auth()
     @HttpCode(200)
     @Patch('profile/:id')
-    @UseInterceptors(FileInterceptor('youtubeVideoPreviewUrl'))
+    @UseInterceptors(FileInterceptor('avatar'))
     async changeTeacherInfo(
         @Body() dto: ChangeProfileDto,
         @Param('id') id: string,
