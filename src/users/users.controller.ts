@@ -28,8 +28,12 @@ export class UsersController {
 
     @HttpCode(200)
     @Get()
-    async getAllUsers(@Query('role') role: Role, @Query('teacherId') teacherId: string) {
-        return this.usersService.getUsers({ role, teacherId: +teacherId })
+    async getAllUsers(
+        @Query('role') role: Role,
+        @Query('teacherId') teacherId: string,
+        @Query('withoutTeacher') withoutTeacher: boolean
+    ) {
+        return this.usersService.getUsers({ role, teacherId: +teacherId, withoutTeacher })
     }
 
     @Auth()
@@ -68,7 +72,16 @@ export class UsersController {
     ) {
         await this.usersService.addStudentToTeacher(+teacherId, +studentId)
 
-        return res.json({ message: 'Студент добавлен к учителю' })
+        return res.json({ message: 'Ученик добавлен к учителю' })
+    }
+
+    @Auth()
+    @Admin()
+    @Delete('student/:id')
+    async deleteStudentFromTeacher(@Param('id') id: string, @Res() res: Response) {
+        await this.usersService.deleteStudentFromTeacher(+id)
+
+        return res.json({ message: 'Ученик успешно удалён у учителя' })
     }
 
     @Auth()

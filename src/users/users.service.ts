@@ -56,13 +56,18 @@ export class UsersService {
         throw new BadRequestException('Пользователь не найден')
     }
 
-    async getUsers({ role, teacherId }: { role?: Role; teacherId?: number }) {
+    async getUsers({ role, teacherId, withoutTeacher }: { role?: Role; teacherId?: number; withoutTeacher?: boolean }) {
         return this.prisma.user.findMany({
             where: {
                 ...(role && { role }),
                 ...(teacherId && {
                     student: {
                         teacherId: teacherId,
+                    },
+                }),
+                ...(withoutTeacher && {
+                    student: {
+                        Teacher: null,
                     },
                 }),
             },
@@ -382,6 +387,10 @@ export class UsersService {
             throw new BadRequestException(`Студень не найден`)
         }
 
+        if (student.teacherId) {
+            throw new BadRequestException(`У данного студента уже есть учитель`)
+        }
+
         return await this.prisma.teacher.update({
             where: {
                 id: teacherId,
@@ -391,6 +400,33 @@ export class UsersService {
                     connect: {
                         id: studentId,
                     },
+                },
+            },
+        })
+    }
+
+    async deleteStudentFromTeacher(studentId: number) {
+        const student = await this.prisma.student.findUnique({
+            where: {
+                id: studentId,
+            },
+        })
+
+        if (!student) {
+            throw new BadRequestException(`Студень не найден`)
+        }
+
+        if (!student.teacherId) {
+            throw new BadRequestException(`У данного студента нет учителя`)
+        }
+
+        return await this.prisma.student.update({
+            where: {
+                id: studentId,
+            },
+            data: {
+                Teacher: {
+                    disconnect: true,
                 },
             },
         })
