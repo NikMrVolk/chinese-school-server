@@ -118,6 +118,24 @@ export class UsersService {
         })
     }
 
+    async deleteOne(id: number) {
+        const user = await this.getFullUserInfo(id)
+
+        if (user.profile.avatar) {
+            await this.filesService.deleteFile(user.profile.avatar)
+        }
+
+        if (user.role === Role.TEACHER && user.teacher.youtubeVideoPreviewUrl) {
+            await this.filesService.deleteFile(user.teacher.youtubeVideoPreviewUrl)
+        }
+
+        return this.prisma.user.delete({
+            where: {
+                id,
+            },
+        })
+    }
+
     async createAdmin(dto: RegistrationDto, avatar?: Express.Multer.File) {
         const password = generateRandomPassword(12, 15)
         this.mailsService.sendRegistrationMail(dto.email, password)
@@ -300,7 +318,7 @@ export class UsersService {
     }
 
     async getFullUserInfo(id: number, email?: string) {
-        return this.prisma.user.findUnique({
+        const user = await this.prisma.user.findUnique({
             where: {
                 ...(id && { id }),
                 ...(email && { email }),
@@ -335,6 +353,12 @@ export class UsersService {
                 },
             },
         })
+
+        if (!user) {
+            throw new BadRequestException('Пользователь не найден')
+        }
+
+        return user
     }
 
     async addStudentToTeacher(teacherId: number, studentId: number) {
@@ -530,6 +554,7 @@ export class UsersService {
     generateProfileSelectObject() {
         return {
             select: {
+                id: true,
                 name: true,
                 surname: true,
                 patronymic: true,

@@ -1,6 +1,7 @@
 import {
     Body,
     Controller,
+    Delete,
     Get,
     HttpCode,
     Param,
@@ -35,7 +36,11 @@ export class UsersController {
     @HttpCode(200)
     @Get('current')
     async getUsers(@CurrentUser('id') id: number) {
-        return this.usersService.getFullUserInfo(id)
+        const user = await this.usersService.getFullUserInfo(id)
+
+        const { password, session, otps, passwordReset, ...userToResponse } = user
+
+        return userToResponse
     }
 
     @Auth()
@@ -43,6 +48,13 @@ export class UsersController {
     @Get(':id')
     async getUserData(@CurrentUser() currentUser: User, @Param('id') id: string) {
         return this.usersService.getCurrentUser({ currentUser, searchedUserId: +id })
+    }
+
+    @Auth()
+    @Admin()
+    @Delete(':id')
+    async deleteUser(@Param('id') id: string) {
+        return this.usersService.deleteOne(+id)
     }
 
     @Auth()
@@ -97,7 +109,7 @@ export class UsersController {
     @Admin()
     @HttpCode(200)
     @Post('email')
-    async deleteUser(@Body() dto: CheckEmailDto) {
+    async validateEmail(@Body() dto: CheckEmailDto) {
         await this.usersService.validateEmail(dto.email)
     }
 }

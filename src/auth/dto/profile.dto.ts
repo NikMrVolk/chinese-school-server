@@ -24,5 +24,5 @@ export class ProfileDto {
 
     @IsOptionalNonNullable()
     @IsDateString({}, { message: 'Неверный формат даты рождения' })
-    birthday?: Date
+    birthday: Date
 }

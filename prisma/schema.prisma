@@ -216,7 +216,7 @@ model PurchasedTariff {
     lessons Lesson[]
 
     studentId Int     @map("student_id")
-    Student   Student @relation(map: "student", fields: [studentId], references: [id])
+    Student   Student @relation(map: "student", fields: [studentId], references: [id], onDelete: Cascade)
 
     @@map("purchased_tariffs")
 }
@@ -230,9 +230,9 @@ model Homework {
     fileUrl String @map("file_url")
 
     studentId Int     @map("student_id")
-    Student   Student @relation(map: "student", fields: [studentId], references: [id])
+    Student   Student @relation(map: "student", fields: [studentId], references: [id], onDelete: Cascade)
     teacherId Int     @map("teacher_id")
-    Teacher   Teacher @relation(map: "teacher", fields: [teacherId], references: [id])
+    Teacher   Teacher @relation(map: "teacher", fields: [teacherId], references: [id], onDelete: Cascade)
 
     @@map("homeworks")
 }
@@ -247,9 +247,9 @@ model Lesson {
     lessonStatus LessonStatus @map("lesson_status")
 
     teacherId         Int              @map("teacher_id")
-    Teacher           Teacher          @relation(map: "teacher", fields: [teacherId], references: [id])
+    Teacher           Teacher          @relation(map: "teacher", fields: [teacherId], references: [id], onDelete: Cascade)
     studentId         Int              @map("student_id")
-    Student           Student          @relation(map: "student", fields: [studentId], references: [id])
+    Student           Student          @relation(map: "student", fields: [studentId], references: [id], onDelete: Cascade)
     purchasedTariffId Int?             @map("purchased_tariff_id")
     PurchasedTariff   PurchasedTariff? @relation(map: "purchased_tariff", fields: [purchasedTariffId], references: [id])
 
@@ -266,9 +266,9 @@ model Chat {
     message Message[]
 
     studentId Int     @unique @map("student_id")
-    Student   Student @relation(map: "student", fields: [studentId], references: [id])
+    Student   Student @relation(map: "student", fields: [studentId], references: [id], onDelete: Cascade)
     teacherId Int     @map("teacher_id")
-    Teacher   Teacher @relation(map: "teacher", fields: [teacherId], references: [id])
+    Teacher   Teacher @relation(map: "teacher", fields: [teacherId], references: [id], onDelete: Cascade)
 
     @@map("chats")
 }
