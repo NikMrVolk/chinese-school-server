@@ -92,10 +92,66 @@ export class UsersService {
                         id: true,
                         packageTitle: true,
                         languageLevel: true,
+                        teacherId: true,
                     },
                 },
             },
         })
+    }
+
+    async getTeacherInfo(teacherId: number, currentUser: User) {
+        if (currentUser.role === Role.TEACHER) {
+            throw new BadRequestException('Ошибка запроса')
+        }
+
+        const teacher = await this.prisma.teacher.findUnique({
+            where: {
+                id: teacherId,
+                students: {
+                    some: {
+                        userId: currentUser.id,
+                    },
+                },
+            },
+            include: {
+                User: {
+                    select: {
+                        id: true,
+                        email: true,
+                        role: true,
+                        profile: {
+                            select: {
+                                name: true,
+                                surname: true,
+                                patronymic: true,
+                                avatar: true,
+                                phone: true,
+                                telegram: true,
+                                birthday: true,
+                            },
+                        },
+                        teacher: {
+                            select: {
+                                experience: true,
+                                description: true,
+                                youtubeVideoId: true,
+                                youtubeVideoPreviewUrl: true,
+                            },
+                        },
+                        student: true,
+                    },
+                },
+            },
+        })
+
+        if (!teacher) {
+            return null
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { User, ...teacherInfo } = teacher
+
+        return User
     }
 
     async getById(id: number) {

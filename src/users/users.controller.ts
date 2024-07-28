@@ -49,6 +49,13 @@ export class UsersController {
 
     @Auth()
     @HttpCode(200)
+    @Get('teachers/:teacherId')
+    async getTeacherInfoFromStudent(@Param('teacherId') teacherId: string, @CurrentUser() currentUser: User) {
+        return this.usersService.getTeacherInfo(+teacherId, currentUser)
+    }
+
+    @Auth()
+    @HttpCode(200)
     @Get(':id')
     async getUserData(@CurrentUser() currentUser: User, @Param('id') id: string) {
         return this.usersService.getCurrentUser({ currentUser, searchedUserId: +id })
