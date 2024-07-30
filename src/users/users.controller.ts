@@ -58,7 +58,11 @@ export class UsersController {
     @HttpCode(200)
     @Get(':id')
     async getUserData(@CurrentUser() currentUser: User, @Param('id') id: string) {
-        return this.usersService.getCurrentUser({ currentUser, searchedUserId: +id })
+        const response = await this.usersService.getCurrentUser({ currentUser, searchedUserId: +id })
+
+        const { password, session, otps, passwordReset, ...userToResponse } = response
+
+        return userToResponse
     }
 
     @Auth()

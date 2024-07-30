@@ -27,6 +27,7 @@ export class ChatsService {
                         select: {
                             user: {
                                 select: {
+                                    id: true,
                                     profile: {
                                         select: {
                                             name: true,
@@ -56,15 +57,17 @@ export class ChatsService {
 
         const response = chats.map(
             ({
-                id,
+                id: chatId,
                 lastMessageTimestamp,
                 Student: {
                     user: {
+                        id,
                         profile: { name, surname },
                     },
                 },
             }) => ({
-                id,
+                id: chatId,
+                userId: id,
                 lastMessageTimestamp,
                 name,
                 surname,
