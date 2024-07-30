@@ -8,6 +8,7 @@ import { MailsModule } from './mails/mails.module'
 import { FilesModule } from './files/files.module'
 import { ServeStaticModule } from '@nestjs/serve-static'
 import * as path from 'path'
+import { ChatsModule } from './chats/chats.module'
 
 @Module({
     imports: [
@@ -21,6 +22,7 @@ import * as path from 'path'
         TariffsModule,
         MailsModule,
         FilesModule,
+        ChatsModule,
     ],
 })
 export class AppModule {}

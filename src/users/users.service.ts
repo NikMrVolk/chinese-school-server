@@ -457,6 +457,11 @@ export class UsersService {
                         id: studentId,
                     },
                 },
+                chats: {
+                    create: {
+                        studentId: studentId,
+                    },
+                },
             },
         })
     }

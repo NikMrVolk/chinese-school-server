@@ -261,7 +261,7 @@ model Chat {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-    lastMessageTimestamp DateTime @map("last_message_timestamp")
+    lastMessageTimestamp DateTime? @default(now()) @map("last_message_timestamp")
 
     message Message[]
 
@@ -280,7 +280,8 @@ model Message {
 
     text      String?
     fileUrl   String?  @map("file_url")
-    timestamp DateTime
+    timestamp DateTime @default(now())
+    senderId  Int      @map("sender_id")
 
     chatId Int  @map("chat_id")
     Chat   Chat @relation(map: "chat", fields: [chatId], references: [id], onDelete: Cascade)
