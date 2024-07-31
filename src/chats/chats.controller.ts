@@ -37,6 +37,26 @@ export class ChatsController {
 
     @Auth()
     @HttpCode(200)
+    @Get(':chatId/messages')
+    async getChatMessages(
+        @Param('chatId') chatId: string,
+        @Query('skip') skip: string,
+        @Query('take') take: string,
+        @Res({ passthrough: true }) res: Response
+    ) {
+        const response = await this.chatsService.getChatMessages(+chatId, +skip, +take)
+
+        const { messages, totalCount } = response
+        if (totalCount) {
+            res.header('Access-Control-Expose-Headers', 'X-Total-Count')
+            res.header('X-Total-Count', totalCount.toString())
+        }
+
+        return messages
+    }
+
+    @Auth()
+    @HttpCode(200)
     @Post(':chatId/messages')
     async sendMessage(
         @Body() dto: CreateMessageDto,

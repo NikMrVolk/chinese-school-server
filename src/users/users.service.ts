@@ -399,6 +399,11 @@ export class UsersService {
                         packageTitle: true,
                         languageLevel: true,
                         teacherId: true,
+                        chat: {
+                            select: {
+                                id: true,
+                            },
+                        },
                         // purchasedTariffs: true,
                     },
                 },

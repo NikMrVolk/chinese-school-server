@@ -80,6 +80,41 @@ export class ChatsService {
         }
     }
 
+    async getChatMessages(chatId: number, skip: number, take: number) {
+        const [messages, totalCount] = await Promise.all([
+            this.prisma.message.findMany({
+                where: {
+                    chatId,
+                },
+                ...(take && { take }),
+                ...(skip && { skip }),
+                orderBy: {
+                    timestamp: 'desc',
+                },
+                select: {
+                    id: true,
+                    text: true,
+                    fileUrl: true,
+                    timestamp: true,
+                    senderId: true,
+                },
+            }),
+            ...(skip || take ? [this.prisma.message.count({ where: { chatId } })] : []),
+        ])
+
+        if (messages.length === 0) {
+            return {
+                messages: [],
+                totalCount,
+            }
+        }
+
+        return {
+            messages: messages.reverse(),
+            totalCount,
+        }
+    }
+
     async createMessage(chatId: number, senderId: number, text?: string, file?: Express.Multer.File) {
         let fileName: string
         if (file) {
