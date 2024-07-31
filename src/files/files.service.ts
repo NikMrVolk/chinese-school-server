@@ -37,4 +37,14 @@ export class FilesService {
             // throw new HttpException('Произошла ошибка при удалении файла', HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
+
+    getExistingFilePath(fileName: string) {
+        const existingFilePath = path.resolve(__dirname, '..', '..', 'client', fileName)
+
+        if (!existingFilePath) {
+            throw new HttpException('Файл не найден', HttpStatus.NOT_FOUND)
+        }
+
+        return existingFilePath
+    }
 }

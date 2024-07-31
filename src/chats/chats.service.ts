@@ -116,10 +116,6 @@ export class ChatsService {
     }
 
     async createMessage(chatId: number, senderId: number, text?: string, file?: Express.Multer.File) {
-        if (text && file) {
-            throw new BadRequestException('Нельзя отправить текст и файл одновременно')
-        }
-
         let fileUrl: string
         let fileOriginalName: string
         if (file) {
