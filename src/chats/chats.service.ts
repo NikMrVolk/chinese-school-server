@@ -116,9 +116,15 @@ export class ChatsService {
     }
 
     async createMessage(chatId: number, senderId: number, text?: string, file?: Express.Multer.File) {
-        let fileName: string
+        if (text && file) {
+            throw new BadRequestException('Нельзя отправить текст и файл одновременно')
+        }
+
+        let fileUrl: string
+        let fileOriginalName: string
         if (file) {
-            fileName = await this.filesService.createFile(file)
+            fileOriginalName = file.originalname
+            fileUrl = await this.filesService.createFile(file)
         }
 
         const chat = await this.prisma.chat.update({
@@ -131,7 +137,7 @@ export class ChatsService {
                     create: {
                         senderId,
                         ...(text && { text }),
-                        ...(fileName && { fileUrl: fileName }),
+                        ...(fileUrl && { fileUrl: fileUrl, text: fileOriginalName }),
                     },
                 },
             },
