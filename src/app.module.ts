@@ -9,12 +9,14 @@ import { FilesModule } from './files/files.module'
 import { ServeStaticModule } from '@nestjs/serve-static'
 import * as path from 'path'
 import { ChatsModule } from './chats/chats.module'
+import { ScheduleModule } from '@nestjs/schedule'
 
 @Module({
     imports: [
         ServeStaticModule.forRoot({
             rootPath: path.resolve(__dirname, '..', 'client'),
         }),
+        ScheduleModule.forRoot(),
         ConfigModule.forRoot(),
         LessonsModule,
         AuthModule,

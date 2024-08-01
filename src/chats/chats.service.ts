@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/com
 import { PrismaService } from 'src/prisma.service'
 import { FilesService } from 'src/files/files.service'
 import { Role, User } from '@prisma/client'
+import { Cron } from '@nestjs/schedule'
 
 @Injectable()
 export class ChatsService {
@@ -165,5 +166,33 @@ export class ChatsService {
         const { message, ...chatToResponse } = chat
 
         return message[message.length - 1]
+    }
+
+    @Cron('0 0 0 * * 7')
+    async deleteMessagesAndFilesAfterSixMonths() {
+        const sixMonthsAgo = new Date()
+        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+
+        const messages = await this.prisma.message.findMany({
+            where: {
+                createdAt: {
+                    lt: sixMonthsAgo,
+                },
+            },
+            select: {
+                fileUrl: true,
+            },
+        })
+
+        const filesUrl = messages.filter(message => message.fileUrl).map(message => message.fileUrl)
+
+        await Promise.all(filesUrl.map(fileUrl => this.filesService.deleteFile(fileUrl)))
+        await this.prisma.message.deleteMany({
+            where: {
+                createdAt: {
+                    lt: sixMonthsAgo,
+                },
+            },
+        })
     }
 }
