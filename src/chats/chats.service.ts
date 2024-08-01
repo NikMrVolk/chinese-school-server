@@ -97,6 +97,7 @@ export class ChatsService {
                     fileUrl: true,
                     timestamp: true,
                     senderId: true,
+                    isDayChange: true,
                 },
             }),
             ...(skip || take ? [this.prisma.message.count({ where: { chatId } })] : []),
@@ -115,12 +116,23 @@ export class ChatsService {
         }
     }
 
-    async createMessage(chatId: number, senderId: number, text?: string, file?: Express.Multer.File) {
+    async createMessage(
+        chatId: number,
+        senderId: number,
+        text?: string,
+        file?: Express.Multer.File,
+        lastMessageTimestamp?: string
+    ) {
         let fileUrl: string
         let fileOriginalName: string
         if (file) {
             fileOriginalName = file.originalname
             fileUrl = await this.filesService.createFile(file)
+        }
+
+        let isDayChange = true
+        if (lastMessageTimestamp) {
+            isDayChange = new Date(lastMessageTimestamp).getDay() === new Date().getDay() ? false : true
         }
 
         const chat = await this.prisma.chat.update({
@@ -132,6 +144,7 @@ export class ChatsService {
                 message: {
                     create: {
                         senderId,
+                        isDayChange,
                         ...(text && { text }),
                         ...(fileUrl && { fileUrl: fileUrl, text: fileOriginalName }),
                     },

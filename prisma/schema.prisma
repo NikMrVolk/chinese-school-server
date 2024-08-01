@@ -278,10 +278,11 @@ model Message {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-    text      String?
-    fileUrl   String?  @map("file_url")
-    timestamp DateTime @default(now())
-    senderId  Int      @map("sender_id")
+    text        String?
+    fileUrl     String?  @map("file_url")
+    timestamp   DateTime @default(now())
+    senderId    Int      @map("sender_id")
+    isDayChange Boolean  @default(false) @map("is_day_change")
 
     chatId Int  @map("chat_id")
     Chat   Chat @relation(map: "chat", fields: [chatId], references: [id], onDelete: Cascade)

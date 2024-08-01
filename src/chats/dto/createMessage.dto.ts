@@ -6,4 +6,7 @@ export class CreateMessageDto {
     @IsString({ message: 'Некорректный текст сообщения' })
     @IsNotEmpty({ message: 'Текст сообщения не может быть пустым' })
     text: string
+
+    @IsOptionalNonNullable()
+    lastMessageTimestamp: string
 }
