@@ -8,6 +8,7 @@ import { Otp, Role, Session, User } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
 import { compareHash, createOtpCode, generateRandomPassword, hashValue } from 'src/utils/helpers'
 import { MailsService } from 'src/mails/mails.service'
+import { Cron } from '@nestjs/schedule'
 
 @Injectable()
 export class AuthService {
@@ -330,6 +331,28 @@ export class AuthService {
                     deleteMany: {
                         userId,
                     },
+                },
+            },
+        })
+    }
+
+    @Cron('0 0 0 * * *')
+    async deleteMessagesAndFilesAfterSixMonths() {
+        const threeHoursAgo = new Date()
+        threeHoursAgo.setHours(threeHoursAgo.getHours() - 3)
+
+        await this.prisma.otp.deleteMany({
+            where: {
+                createdAt: {
+                    lt: threeHoursAgo,
+                },
+            },
+        })
+
+        await this.prisma.passwordReset.deleteMany({
+            where: {
+                createdAt: {
+                    lt: threeHoursAgo,
                 },
             },
         })
