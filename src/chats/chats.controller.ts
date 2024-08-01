@@ -92,7 +92,8 @@ export class ChatsController {
         fileUrl?: Express.Multer.File
     ) {
         const message = await this.chatsService.createMessage(+chatId, currentUser.id, dto.text, fileUrl)
-        this.wsChatGateway.server.to(chatId).emit(Events.NewMessage, message)
-        return message
+        const { createdAt, updatedAt, chatId: chatIdFromMessage, ...rest } = message
+        this.wsChatGateway.server.to(chatId).emit(Events.NewMessage, rest)
+        return rest
     }
 }
