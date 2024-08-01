@@ -9,5 +9,6 @@ import { WsChatGateway } from './wsChat.gateway'
     imports: [FilesModule],
     providers: [ChatsService, PrismaService, WsChatGateway],
     controllers: [ChatsController],
+    exports: [ChatsService],
 })
 export class ChatsModule {}

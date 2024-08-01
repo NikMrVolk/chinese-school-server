@@ -6,11 +6,12 @@ import { UsersController } from './users.controller'
 import { JwtService } from '@nestjs/jwt'
 import { MailsModule } from 'src/mails/mails.module'
 import { FilesModule } from 'src/files/files.module'
+import { ChatsModule } from 'src/chats/chats.module'
 
 @Module({
     controllers: [UsersController],
     providers: [PrismaService, UsersService, JwtService],
-    imports: [ConfigModule, MailsModule, FilesModule],
+    imports: [ConfigModule, MailsModule, FilesModule, ChatsModule],
     exports: [UsersService],
 })
 export class UsersModule {}

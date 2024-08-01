@@ -9,13 +9,15 @@ import { ChangeProfileDto } from './dto/ChangeProfile.dto'
 import { MailsService } from 'src/mails/mails.service'
 import { FilesService } from 'src/files/files.service'
 import { ChangeTeacherInfoDto } from './dto/changeTeacherInfo.dto'
+import { ChatsService } from 'src/chats/chats.service'
 
 @Injectable()
 export class UsersService {
     constructor(
         private mailsService: MailsService,
         private prisma: PrismaService,
-        private filesService: FilesService
+        private filesService: FilesService,
+        private chatsService: ChatsService
     ) {}
 
     async getCurrentUser({ currentUser, searchedUserId }: { currentUser: User; searchedUserId: number }) {
@@ -476,6 +478,10 @@ export class UsersService {
             where: {
                 id: studentId,
             },
+            select: {
+                teacherId: true,
+                chat: true,
+            },
         })
 
         if (!student) {
@@ -485,6 +491,8 @@ export class UsersService {
         if (!student.teacherId) {
             throw new BadRequestException(`У данного студента нет учителя`)
         }
+
+        this.chatsService.deleteChatWithMessages(student.chat.id)
 
         return await this.prisma.student.update({
             where: {

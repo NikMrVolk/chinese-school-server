@@ -168,8 +168,29 @@ export class ChatsService {
         return message[message.length - 1]
     }
 
+    async deleteChatWithMessages(chatId: number) {
+        const chat = await this.prisma.chat.findUnique({
+            where: {
+                id: chatId,
+            },
+            select: {
+                message: true,
+            },
+        })
+
+        const filesUrl = chat.message.filter(message => message.fileUrl).map(message => message.fileUrl)
+
+        await Promise.all(filesUrl.map(fileUrl => this.filesService.deleteFile(fileUrl)))
+
+        await this.prisma.chat.delete({
+            where: {
+                id: chatId,
+            },
+        })
+    }
+
     @Cron('0 0 0 * * 7')
-    async deleteMessagesAndFilesAfterSixMonths() {
+    private async deleteMessagesAndFilesAfterSixMonths() {
         const sixMonthsAgo = new Date()
         sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
 
