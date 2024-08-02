@@ -3,6 +3,7 @@ import { Role, User } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
 import { UpdateLessonLinkDto } from './dto/updateLessonLink.dto'
 import { UpdateNotesDto } from './dto/updateNotes.dto'
+import { UpdateLanguageLevelDto } from './dto/updateLanguageLevel.dto'
 
 @Injectable()
 export class StudentsService {
@@ -59,5 +60,16 @@ export class StudentsService {
         }
 
         return true
+    }
+
+    async updateLanguageLevel(studentId: number, dto: UpdateLanguageLevelDto) {
+        return await this.prisma.student.update({
+            where: {
+                id: studentId,
+            },
+            data: {
+                languageLevel: dto.languageLevel,
+            },
+        })
     }
 }

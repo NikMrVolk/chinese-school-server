@@ -1,9 +1,10 @@
 import { Body, Controller, HttpCode, Param, Patch } from '@nestjs/common'
-import { Auth, CurrentUser } from 'src/utils/decorators'
+import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { UpdateLessonLinkDto } from './dto/updateLessonLink.dto'
 import { User } from '@prisma/client'
 import { StudentsService } from './students.service'
 import { UpdateNotesDto } from './dto/updateNotes.dto'
+import { UpdateLanguageLevelDto } from './dto/updateLanguageLevel.dto'
 
 @Auth()
 @Controller('students')
@@ -34,5 +35,14 @@ export class StudentsController {
         const { text } = await this.studentsService.updateNotes(+studentId, dto)
 
         return text
+    }
+
+    @Admin()
+    @HttpCode(200)
+    @Patch(':studentId/levels')
+    async updateLanguageLevel(@Body() dto: UpdateLanguageLevelDto, @Param('studentId') studentId: string) {
+        const { languageLevel } = await this.studentsService.updateLanguageLevel(+studentId, dto)
+
+        return languageLevel
     }
 }
