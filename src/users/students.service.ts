@@ -20,8 +20,6 @@ export class StudentsService {
     }
 
     async updateNotes(studentId: number, dto: UpdateNotesDto) {
-        console.log(studentId)
-
         return await this.prisma.note.update({
             where: {
                 studentId,
