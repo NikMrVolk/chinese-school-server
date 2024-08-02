@@ -109,11 +109,6 @@ export class UsersService {
         const teacher = await this.prisma.teacher.findUnique({
             where: {
                 id: teacherId,
-                students: {
-                    some: {
-                        userId: currentUser.id,
-                    },
-                },
             },
             include: {
                 User: {
