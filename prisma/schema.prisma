@@ -162,6 +162,7 @@ model Student {
     updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
     packageTitle String? @map("package_title")
+    lessonLink   String? @map("lesson_link")
 
     purchasedTariffs PurchasedTariff[]
     lessons          Lesson[]

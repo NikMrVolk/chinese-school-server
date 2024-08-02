@@ -7,10 +7,12 @@ import { JwtService } from '@nestjs/jwt'
 import { MailsModule } from 'src/mails/mails.module'
 import { FilesModule } from 'src/files/files.module'
 import { ChatsModule } from 'src/chats/chats.module'
+import { StudentsController } from './students.controller'
+import { StudentsService } from './students.service'
 
 @Module({
-    controllers: [UsersController],
-    providers: [PrismaService, UsersService, JwtService],
+    controllers: [UsersController, StudentsController],
+    providers: [PrismaService, UsersService, JwtService, StudentsService],
     imports: [ConfigModule, MailsModule, FilesModule, ChatsModule],
     exports: [UsersService],
 })

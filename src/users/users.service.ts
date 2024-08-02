@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common'
 import * as bcrypt from 'bcrypt'
 import { PrismaService } from 'src/prisma.service'
 import { RegistrationDto, RegistrationStudentDto, RegistrationTeacherDto } from '../auth/dto/registration.dto'
@@ -22,7 +22,7 @@ export class UsersService {
 
     async getCurrentUser({ currentUser, searchedUserId }: { currentUser: User; searchedUserId: number }) {
         if (!searchedUserId || !currentUser) {
-            throw new BadRequestException('Ошибка запроса')
+            throw new ForbiddenException('Ошибка запроса')
         }
 
         if (currentUser.id === searchedUserId) {
@@ -32,7 +32,7 @@ export class UsersService {
         const searchedUser = await this.getFullUserInfo(searchedUserId)
 
         if (!searchedUser) {
-            throw new BadRequestException('Пользователь не найден')
+            throw new ForbiddenException('Пользователь не найден')
         }
 
         if (currentUser.role === Role.ADMIN) {
@@ -393,6 +393,7 @@ export class UsersService {
                 student: {
                     select: {
                         id: true,
+                        lessonLink: true,
                         packageTitle: true,
                         languageLevel: true,
                         teacherId: true,
