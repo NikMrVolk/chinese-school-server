@@ -3,13 +3,14 @@ import { Auth, CurrentUser } from 'src/utils/decorators'
 import { UpdateLessonLinkDto } from './dto/updateLessonLink.dto'
 import { User } from '@prisma/client'
 import { StudentsService } from './students.service'
+import { UpdateNotesDto } from './dto/updateNotes.dto'
 
 @Auth()
 @Controller('students')
 export class StudentsController {
     constructor(private studentsService: StudentsService) {}
 
-    @Patch(':studentId/link')
+    @Patch(':studentId/links')
     @HttpCode(200)
     async updateLessonLink(
         @CurrentUser() currentUser: User,
@@ -17,8 +18,21 @@ export class StudentsController {
         @Param('studentId') studentId: string
     ) {
         await this.studentsService.isCurrentTeacherHaveThisStudent(currentUser, +studentId)
-        const response = await this.studentsService.updateLessonLink(+studentId, dto)
+        const { lessonLink } = await this.studentsService.updateLessonLink(+studentId, dto)
 
-        return response.lessonLink
+        return lessonLink
+    }
+
+    @HttpCode(200)
+    @Patch(':studentId/notes')
+    async updateNotes(
+        @CurrentUser() currentUser: User,
+        @Body() dto: UpdateNotesDto,
+        @Param('studentId') studentId: string
+    ) {
+        await this.studentsService.isCurrentTeacherHaveThisStudent(currentUser, +studentId)
+        const { text } = await this.studentsService.updateNotes(+studentId, dto)
+
+        return text
     }
 }

@@ -147,9 +147,10 @@ model Note {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-    text      String
-    studentId Int    @map("student_id")
+    text String
 
+    studentId Int      @map("student_id") @unique()
+    Student   Student  @relation(map: "student", fields: [studentId], references: [id], onDelete: Cascade)
     teacherId Int?
     Teacher   Teacher? @relation(map: "teacher", fields: [teacherId], references: [id], onDelete: Cascade)
 
@@ -168,6 +169,7 @@ model Student {
     lessons          Lesson[]
     homeworks        Homework[]
     chat             Chat?
+    Note      Note?
 
     languageLevel LanguageLevel @map("language_level")
 

@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common'
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { Role } from '@prisma/client'
 import { JwtPayload } from '../types'
@@ -24,10 +24,10 @@ export class RoleGuard implements CanActivate {
                     }
                 } catch (e) {
                     console.error(e)
-                    throw new ForbiddenException('Invalid token')
+                    throw new UnauthorizedException('Invalid token')
                 }
             }
         }
-        throw new ForbiddenException('Invalid token')
+        throw new UnauthorizedException('Invalid token')
     }
 }

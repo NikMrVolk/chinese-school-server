@@ -397,6 +397,12 @@ export class UsersService {
                         packageTitle: true,
                         languageLevel: true,
                         teacherId: true,
+                        Note: {
+                            select: {
+                                id: true,
+                                text: true,
+                            },
+                        },
                         chat: {
                             select: {
                                 id: true,
@@ -463,6 +469,12 @@ export class UsersService {
                 chats: {
                     create: {
                         studentId: studentId,
+                    },
+                },
+                notes: {
+                    create: {
+                        studentId: studentId,
+                        text: '',
                     },
                 },
             },

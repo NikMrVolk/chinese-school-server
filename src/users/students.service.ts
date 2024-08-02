@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable } from '@nestjs/common'
 import { Role, User } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
 import { UpdateLessonLinkDto } from './dto/updateLessonLink.dto'
+import { UpdateNotesDto } from './dto/updateNotes.dto'
 
 @Injectable()
 export class StudentsService {
@@ -14,6 +15,19 @@ export class StudentsService {
             },
             data: {
                 lessonLink: dto.link,
+            },
+        })
+    }
+
+    async updateNotes(studentId: number, dto: UpdateNotesDto) {
+        console.log(studentId)
+
+        return await this.prisma.note.update({
+            where: {
+                studentId,
+            },
+            data: {
+                text: dto.text,
             },
         })
     }
