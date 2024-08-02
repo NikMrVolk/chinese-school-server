@@ -210,7 +210,7 @@ model PurchasedTariff {
     isRescheduleLessons Boolean  @map("is_rescedule_lessons")
     isPopular           Boolean  @default(false) @map("is_popular")
 
-    startedAt      DateTime? @map("started_at")
+    expiredIn      DateTime? @map("started_at")
     completedHours Int       @map("completed_hours")
     paymentLink    String    @map("payment_link")
 
