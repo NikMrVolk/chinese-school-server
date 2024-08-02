@@ -13,6 +13,13 @@ export class TariffsService {
             },
             select: {
                 id: true,
+                title: true,
+                price: true,
+                quantityHours: true,
+                benefits: true,
+                quantityWeeksActive: true,
+                isRescheduleLessons: true,
+                isPopular: true,
                 completedHours: true,
                 paymentStatus: true,
                 paymentLink: true,
