@@ -1,16 +1,18 @@
-import { Body, Controller, HttpCode, Param, Patch, Post } from '@nestjs/common'
+import { Body, Controller, Delete, HttpCode, Param, Patch, Post } from '@nestjs/common'
 import { User } from '@prisma/client'
-import { Auth, CurrentUser } from 'src/utils/decorators'
+import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { LessonsService } from './lessons.service'
 import { CreateLessonDto } from './dto/lesson.dto'
 import { StudentsService } from 'src/users/students.service'
+import { LessonsCheckService } from './lessonsCheck.service'
 
 @Auth()
 @Controller('lessons')
 export class LessonsController {
     constructor(
         private readonly lessonsService: LessonsService,
-        private readonly studentsService: StudentsService
+        private readonly studentsService: StudentsService,
+        private readonly lessonsCheckService: LessonsCheckService
     ) {}
 
     // @Admin()
@@ -37,10 +39,10 @@ export class LessonsController {
         @Param('studentId') studentId: string
     ) {
         await this.studentsService.isCurrentTeacherHaveThisStudent(currentUser, +studentId)
-        await this.lessonsService.checkScheduledTime(currentUser, dto)
-        await this.lessonsService.checkIsLessonTimeBusy(+studentId, +teacherId, dto)
+        await this.lessonsCheckService.isScheduledTimeValid(currentUser, dto)
+        await this.lessonsCheckService.isLessonTimeBusy(+studentId, +teacherId, dto)
 
-        const purchasedTariff = await this.lessonsService.checkIsStudentHasHours({ dto, studentId: +studentId })
+        const purchasedTariff = await this.lessonsCheckService.isStudentHasHours({ dto, studentId: +studentId })
 
         return this.lessonsService.create({
             teacherId: +teacherId,
@@ -61,10 +63,10 @@ export class LessonsController {
         @Param('studentId') studentId: string
     ) {
         await this.studentsService.isCurrentTeacherHaveThisStudent(currentUser, +studentId)
-        await this.lessonsService.checkScheduledTime(currentUser, dto)
-        await this.lessonsService.checkIsLessonTimeBusy(+studentId, +teacherId, dto)
+        await this.lessonsCheckService.isScheduledTimeValid(currentUser, dto)
+        await this.lessonsCheckService.isLessonTimeBusy(+studentId, +teacherId, dto)
 
-        await this.lessonsService.checkIsStudentHasHours({ dto, studentId: +studentId, isReschedule: true })
+        await this.lessonsCheckService.isStudentHasHours({ dto, studentId: +studentId, isReschedule: true })
 
         return this.lessonsService.reschedule({
             lessonId: +lessonId,
@@ -73,15 +75,17 @@ export class LessonsController {
         })
     }
 
-    // @Admin()
-    // @HttpCode(200)
-    // @Patch(':id/confirm')
-    // async confirm(@Param('id') lessonId: number) {
-    //     return this.lessonsService.confirm(+lessonId)
-    // }
+    @Admin()
+    @HttpCode(200)
+    @Patch(':lessonId')
+    async confirm(@Param('lessonId') lessonId: number) {
+        return this.lessonsService.confirm(+lessonId)
+    }
 
-    // @Admin()
-    // @HttpCode(200)
-    // @Delete(':id')
-    // async delete(@Param('id') lessonId: number) {}
+    @Admin()
+    @HttpCode(200)
+    @Delete(':lessonId')
+    async delete(@Param('lessonId') lessonId: number) {
+        return this.lessonsService.delete(+lessonId)
+    }
 }
