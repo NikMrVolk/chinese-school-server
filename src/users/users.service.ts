@@ -398,6 +398,7 @@ export class UsersService {
                         languageLevel: true,
                         teacherId: true,
                         purchasedTariffs: true,
+                        homeworks: true,
                         Note: {
                             select: {
                                 id: true,

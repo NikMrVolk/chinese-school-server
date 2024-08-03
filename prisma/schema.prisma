@@ -133,7 +133,6 @@ model Teacher {
     students  Student[]
     notes     Note[]
     lessons   Lesson[]
-    homeworks Homework[]
     chats     Chat[]
 
     userId Int  @unique @map("user_id")
@@ -234,9 +233,6 @@ model Homework {
 
     studentId Int     @map("student_id")
     Student   Student @relation(map: "student", fields: [studentId], references: [id], onDelete: Cascade)
-    teacherId Int     @map("teacher_id")
-    Teacher   Teacher @relation(map: "teacher", fields: [teacherId], references: [id], onDelete: Cascade)
-
     @@map("homeworks")
 }
 
