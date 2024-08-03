@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
 import { LessonStatus, PurchasedTariff, Role, User } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
 import { CreateLessonDto } from './dto/lesson.dto'
@@ -7,51 +7,20 @@ import { CreateLessonDto } from './dto/lesson.dto'
 export class LessonsService {
     constructor(private readonly prisma: PrismaService) {}
 
-    // async getUserLessons({
-    //     userId,
-    //     query,
-    // }: {
-    //     userId: string
-    //     query: {
-    //         startDate?: Date
-    //         endDate?: Date
-    //         isUpcoming?: boolean
-    //     }
-    // }) {
-    //     const user = await this.prisma.user.findUnique({
-    //         where: {
-    //             id: +userId,
-    //         },
-    //     })
+    async getLessons(status?: LessonStatus) {
+        if (status && status !== 'NOT_CONFIRMED') {
+            throw new BadRequestException('Ошибка запроса')
+        }
 
-    //     if (!user) {
-    //         throw new BadRequestException('Невозможно найти занятия указанного пользователя')
-    //     }
-
-    //     const currentTimePlusOneHour = new Date()
-    //     currentTimePlusOneHour.setHours(currentTimePlusOneHour.getHours() + 1)
-
-    //     return this.prisma.lesson.findMany({
-    //         where: {
-    //             [user.role === Role.STUDENT ? 'studentId' : 'teacherId']: user.id,
-    //             ...(query.startDate &&
-    //                 query.endDate && {
-    //                     startDate: {
-    //                         gte: query.startDate,
-    //                         lte: query.endDate,
-    //                     },
-    //                 }),
-    //             ...(query.isUpcoming && {
-    //                 startDate: {
-    //                     gte: currentTimePlusOneHour,
-    //                 },
-    //             }),
-    //         },
-    //         orderBy: {
-    //             startDate: 'asc',
-    //         },
-    //     })
-    // }
+        return this.prisma.lesson.findMany({
+            where: {
+                ...(status && { lessonStatus: status }),
+            },
+            orderBy: {
+                startDate: 'asc',
+            },
+        })
+    }
 
     async create({
         teacherId,

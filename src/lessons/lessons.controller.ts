@@ -1,5 +1,5 @@
-import { Body, Controller, Delete, HttpCode, Param, Patch, Post } from '@nestjs/common'
-import { User } from '@prisma/client'
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common'
+import { LessonStatus, User } from '@prisma/client'
 import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { LessonsService } from './lessons.service'
 import { CreateLessonDto } from './dto/lesson.dto'
@@ -15,20 +15,12 @@ export class LessonsController {
         private readonly lessonsCheckService: LessonsCheckService
     ) {}
 
-    // @Admin()
-    // @HttpCode(200)
-    // @Get()
-    // async getUserLessons(
-    //     @Param('id') userId: string,
-    //     @Query()
-    //     query: {
-    //         startDate?: Date
-    //         endDate?: Date
-    //         isUpcoming?: boolean
-    //     }
-    // ) {
-    //     return this.lessonsService.getUserLessons({ userId, query })
-    // }
+    @Admin()
+    @HttpCode(200)
+    @Get()
+    async getLessons(@Query('status') status: LessonStatus) {
+        return this.lessonsService.getLessons(status)
+    }
 
     @HttpCode(200)
     @Post(':teacherId/:studentId')
