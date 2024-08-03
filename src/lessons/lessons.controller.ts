@@ -1,10 +1,11 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Res } from '@nestjs/common'
 import { LessonStatus, User } from '@prisma/client'
 import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { LessonsService } from './lessons.service'
 import { CreateLessonDto } from './dto/lesson.dto'
 import { StudentsService } from 'src/users/students.service'
 import { LessonsCheckService } from './lessonsCheck.service'
+import { Response } from 'express'
 
 @Auth()
 @Controller('lessons')
@@ -20,6 +21,28 @@ export class LessonsController {
     @Get()
     async getLessons(@Query('status') status: LessonStatus) {
         return this.lessonsService.getLessons(status)
+    }
+
+    @Get(':userId/users')
+    async getLessonsByUserId(
+        @Param('userId') userId: string,
+        @Query('skip') skip: string,
+        @Query('take') take: string,
+        @Res({ passthrough: true }) res: Response
+    ) {
+        const response = await this.lessonsService.getLessonsByUserId({
+            userId: +userId,
+            skip: +skip,
+            take: +take,
+        })
+
+        const { lessons, totalCount } = response
+        if (totalCount) {
+            res.header('Access-Control-Expose-Headers', 'X-Total-Count')
+            res.header('X-Total-Count', totalCount.toString())
+        }
+
+        return lessons
     }
 
     @HttpCode(200)

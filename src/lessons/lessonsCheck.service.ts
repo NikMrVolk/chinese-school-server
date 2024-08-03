@@ -8,9 +8,21 @@ export class LessonsCheckService {
     constructor(private readonly prisma: PrismaService) {}
 
     async isLessonTimeBusy(studentId: number, teacherId: number, dto: CreateLessonDto) {
-        const lesson = await this.prisma.lesson.findFirst({
+        const studentLesson = await this.prisma.lesson.findFirst({
             where: {
                 studentId,
+                startDate: {
+                    equals: dto.startDate,
+                },
+            },
+        })
+
+        if (studentLesson) {
+            throw new BadRequestException('На данное время у ученика уже запланировано занятие')
+        }
+
+        const teacherLesson = await this.prisma.lesson.findFirst({
+            where: {
                 teacherId,
                 startDate: {
                     equals: dto.startDate,
@@ -18,8 +30,8 @@ export class LessonsCheckService {
             },
         })
 
-        if (lesson) {
-            throw new BadRequestException('На данное время уже запланировано занятие')
+        if (teacherLesson) {
+            throw new BadRequestException('На данное время у учителя уже запланировано занятие')
         }
     }
 

@@ -2,10 +2,14 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { LessonStatus, PurchasedTariff, Role, User } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
 import { CreateLessonDto } from './dto/lesson.dto'
+import { UsersService } from 'src/users/users.service'
 
 @Injectable()
 export class LessonsService {
-    constructor(private readonly prisma: PrismaService) {}
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly usersService: UsersService
+    ) {}
 
     async getLessons(status?: LessonStatus) {
         if (status && status !== 'NOT_CONFIRMED') {
@@ -20,6 +24,124 @@ export class LessonsService {
                 startDate: 'asc',
             },
         })
+    }
+
+    async getLessonsByUserId({
+        userId,
+        skip,
+        take,
+        startTime,
+        endTime,
+    }: {
+        userId: number
+        skip?: number
+        take?: number
+        startTime?: Date
+        endTime?: Date
+    }) {
+        const user = await this.usersService.getFullUserInfo(userId)
+
+        const role = user.role === Role.TEACHER ? Role.TEACHER : Role.STUDENT
+        const id = user.role === Role.TEACHER ? user.teacher.id : user.student.id
+
+        const [lessons, totalCount] = await Promise.all([
+            this.prisma.lesson.findMany({
+                where: {
+                    ...((startTime || endTime) && {
+                        startDate: {
+                            ...(startTime && { gte: startTime }),
+                            ...(endTime && { lte: endTime }),
+                        },
+                    }),
+                    ...(role === Role.TEACHER ? { teacherId: id } : { studentId: id }),
+                    lessonStatus: LessonStatus.START_SOON,
+                },
+                select: {
+                    id: true,
+                    startDate: true,
+                    lessonStatus: true,
+                    Student: {
+                        select: {
+                            lessonLink: true,
+                            languageLevel: true,
+                            user: {
+                                select: {
+                                    id: true,
+                                    profile: {
+                                        select: {
+                                            name: true,
+                                            surname: true,
+                                            patronymic: true,
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                    Teacher: {
+                        select: {
+                            User: {
+                                select: {
+                                    id: true,
+                                    profile: {
+                                        select: {
+                                            name: true,
+                                            surname: true,
+                                            patronymic: true,
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                orderBy: {
+                    startDate: 'asc',
+                },
+                ...(skip && { skip }),
+                ...(take && { take }),
+            }),
+            ...(skip || take
+                ? [
+                      this.prisma.lesson.count({
+                          where: {
+                              ...(role === Role.TEACHER ? { teacherId: id } : { studentId: id }),
+                          },
+                      }),
+                  ]
+                : []),
+        ])
+
+        if (lessons.length === 0) {
+            return {
+                teacherChats: [],
+                totalCount,
+            }
+        }
+
+        const response = lessons.map(chat => ({
+            id: chat.id,
+            startDate: chat.startDate,
+            link: chat.Student.lessonLink,
+            student: {
+                name: chat.Student.user.profile.name,
+                surname: chat.Student.user.profile.surname,
+                patronymic: chat.Student.user.profile.patronymic,
+                languageLevel: chat.Student.languageLevel,
+                userId: chat.Student.user.id,
+            },
+            teacher: {
+                name: chat.Teacher.User.profile.name,
+                surname: chat.Teacher.User.profile.surname,
+                patronymic: chat.Teacher.User.profile.patronymic,
+                userId: chat.Teacher.User.id,
+            },
+        }))
+
+        return {
+            lessons: response,
+            totalCount,
+        }
     }
 
     async create({
