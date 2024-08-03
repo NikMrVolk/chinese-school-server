@@ -14,6 +14,6 @@ import { StudentsService } from './students.service'
     controllers: [UsersController, StudentsController],
     providers: [PrismaService, UsersService, JwtService, StudentsService],
     imports: [ConfigModule, MailsModule, FilesModule, ChatsModule],
-    exports: [UsersService],
+    exports: [UsersService, StudentsService],
 })
 export class UsersModule {}

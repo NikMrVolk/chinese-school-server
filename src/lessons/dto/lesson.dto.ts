@@ -1,12 +1,6 @@
-import { IsDateString, IsNumber } from 'class-validator'
+import { IsDateString } from 'class-validator'
 
-export class LessonDto {
-    @IsNumber({}, { message: 'Неверный формат ID студента' })
-    studentId: number
-
-    @IsNumber({}, { message: 'Неверный формат ID учителя' })
-    teacherId: number
-
-    @IsDateString({}, { each: true, message: 'Неверный формат даты занятия' })
+export class CreateLessonDto {
+    @IsDateString({}, { each: true, message: 'Проверьте дату и время занятия' })
     startDate: Date
 }

@@ -9,6 +9,6 @@ import { UsersModule } from 'src/users/users.module'
 @Module({
     controllers: [LessonsController],
     providers: [LessonsService, PrismaService, JwtService],
-    imports: [MailsModule, UsersModule],
+    imports: [MailsModule, UsersModule, UsersModule],
 })
 export class LessonsModule {}
