@@ -1,4 +1,4 @@
-import { Body, Controller, HttpCode, Param, Post } from '@nestjs/common'
+import { Body, Controller, HttpCode, Param, Patch, Post } from '@nestjs/common'
 import { User } from '@prisma/client'
 import { Auth, CurrentUser } from 'src/utils/decorators'
 import { LessonsService } from './lessons.service'
@@ -39,7 +39,8 @@ export class LessonsController {
         await this.studentsService.isCurrentTeacherHaveThisStudent(currentUser, +studentId)
         await this.lessonsService.checkScheduledTime(currentUser, dto)
         await this.lessonsService.checkIsLessonTimeBusy(+studentId, +teacherId, dto)
-        const purchasedTariff = await this.lessonsService.checkIsStudentHasHours(+studentId, dto)
+
+        const purchasedTariff = await this.lessonsService.checkIsStudentHasHours({ dto, studentId: +studentId })
 
         return this.lessonsService.create({
             teacherId: +teacherId,
@@ -50,11 +51,27 @@ export class LessonsController {
         })
     }
 
-    // @HttpCode(200)
-    // @Put(':teacherId/:studentId/reschedule/:id')
-    // async reschedule(@CurrentUser() currentUser: User, @Param('id') lessonId: number, @Body() dto: CreateLessonDto) {
-    //     // return this.lessonsService.reschedule(currentUser, lessonId, dto)
-    // }
+    @HttpCode(200)
+    @Patch(':teacherId/:studentId/reschedule/:lessonId')
+    async reschedule(
+        @CurrentUser() currentUser: User,
+        @Param('lessonId') lessonId: number,
+        @Body() dto: CreateLessonDto,
+        @Param('teacherId') teacherId: string,
+        @Param('studentId') studentId: string
+    ) {
+        await this.studentsService.isCurrentTeacherHaveThisStudent(currentUser, +studentId)
+        await this.lessonsService.checkScheduledTime(currentUser, dto)
+        await this.lessonsService.checkIsLessonTimeBusy(+studentId, +teacherId, dto)
+
+        await this.lessonsService.checkIsStudentHasHours({ dto, studentId: +studentId, isReschedule: true })
+
+        return this.lessonsService.reschedule({
+            lessonId: +lessonId,
+            dto,
+            currentUser,
+        })
+    }
 
     // @Admin()
     // @HttpCode(200)

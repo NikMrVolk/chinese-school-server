@@ -92,6 +92,20 @@ export class LessonsService {
         })
     }
 
+    async reschedule({ lessonId, dto, currentUser }: { lessonId: number; dto: CreateLessonDto; currentUser: User }) {
+        const lessonStatus = currentUser.role === Role.TEACHER ? LessonStatus.NOT_CONFIRMED : LessonStatus.START_SOON
+
+        return this.prisma.lesson.update({
+            where: {
+                id: lessonId,
+            },
+            data: {
+                lessonStatus,
+                startDate: dto.startDate,
+            },
+        })
+    }
+
     async checkIsLessonTimeBusy(studentId: number, teacherId: number, dto: CreateLessonDto) {
         const lesson = await this.prisma.lesson.findFirst({
             where: {
@@ -108,7 +122,29 @@ export class LessonsService {
         }
     }
 
-    async checkIsStudentHasHours(studentId: number, dto: CreateLessonDto) {
+    async checkIsStudentHasHours({
+        studentId,
+        dto,
+        isReschedule = false,
+    }: {
+        studentId: number
+        dto: CreateLessonDto
+        isReschedule?: boolean
+    }) {
+        const activeTariff = await this.getStudentActiveTariff(studentId, isReschedule)
+
+        if (!activeTariff) {
+            throw new BadRequestException('У студента закончились часы или срок действия тарифа')
+        }
+
+        if (activeTariff.expiredIn.getTime() < new Date(dto.startDate).getTime()) {
+            throw new BadRequestException('В указанную дату у студента закончится срок действия тарифа')
+        }
+
+        return activeTariff
+    }
+
+    async getStudentActiveTariff(studentId: number, isReschedule?: boolean) {
         const purchasedTariffs = await this.prisma.purchasedTariff.findMany({
             where: {
                 studentId,
@@ -121,23 +157,15 @@ export class LessonsService {
 
         const scheduledLessons = await this.getAllStudentScheduledLessons(+studentId)
 
-        console.log(scheduledLessons)
-
         const activeTariff = purchasedTariffs?.find(tariff => {
-            const isHoursEnded = tariff.completedHours + scheduledLessons.length < tariff.quantityHours
+            const totalReservedHours = tariff.completedHours + scheduledLessons.length - (isReschedule ? 1 : 0)
+
+            const isHoursEnded = totalReservedHours < tariff.quantityHours
             const paymentStatusSuccess = tariff.paymentStatus === 'SUCCESS'
             const notExpired = new Date().getDate() < new Date(tariff.expiredIn ? tariff.expiredIn : 0).getDate()
 
             return isHoursEnded && paymentStatusSuccess && notExpired
         })
-
-        if (!activeTariff) {
-            throw new BadRequestException('У студента закончились часы или срок действия тарифа')
-        }
-
-        if (activeTariff.expiredIn.getTime() < new Date(dto.startDate).getTime()) {
-            throw new BadRequestException('В указанную дату у студента закончится срок действия тарифа')
-        }
 
         return activeTariff
     }
