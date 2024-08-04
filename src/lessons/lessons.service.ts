@@ -188,21 +188,37 @@ export class LessonsService {
     }
 
     async confirm(lessonId: number) {
-        return this.prisma.lesson.update({
-            where: {
-                id: lessonId,
-            },
-            data: {
-                lessonStatus: LessonStatus.START_SOON,
-            },
-        })
+        try {
+            const lesson = await this.prisma.lesson.update({
+                where: {
+                    id: lessonId,
+                },
+                data: {
+                    lessonStatus: LessonStatus.START_SOON,
+                },
+            })
+
+            return lesson
+        } catch (error) {
+            console.error(error)
+            throw new BadRequestException('Произошла ошибка при подтверждении урока')
+        }
+
+        return
     }
 
     async delete(lessonId: number) {
-        return this.prisma.lesson.delete({
-            where: {
-                id: lessonId,
-            },
-        })
+        try {
+            const lesson = await this.prisma.lesson.delete({
+                where: {
+                    id: lessonId,
+                },
+            })
+
+            return lesson
+        } catch (error) {
+            console.error(error)
+            throw new BadRequestException('Произошла ошибка при удалении урока')
+        }
     }
 }
