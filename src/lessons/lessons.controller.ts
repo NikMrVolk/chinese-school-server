@@ -28,12 +28,18 @@ export class LessonsController {
         @Param('userId') userId: string,
         @Query('skip') skip: string,
         @Query('take') take: string,
+        @Query('status') lessonStatus: LessonStatus,
+        @Query('startDate') startDate: Date,
+        @Query('endDate') endDate: Date,
         @Res({ passthrough: true }) res: Response
     ) {
         const response = await this.lessonsService.getLessonsByUserId({
             userId: +userId,
             skip: +skip,
             take: +take,
+            lessonStatus,
+            startDate,
+            endDate,
         })
 
         const { lessons, totalCount } = response

@@ -30,32 +30,49 @@ export class LessonsService {
         userId,
         skip,
         take,
-        startTime,
-        endTime,
+        startDate,
+        endDate,
+        lessonStatus,
     }: {
         userId: number
         skip?: number
         take?: number
-        startTime?: Date
-        endTime?: Date
+        startDate?: Date
+        endDate?: Date
+        lessonStatus?: LessonStatus
     }) {
         const user = await this.usersService.getFullUserInfo(userId)
 
         const role = user.role === Role.TEACHER ? Role.TEACHER : Role.STUDENT
         const id = user.role === Role.TEACHER ? user.teacher.id : user.student.id
 
+        const where = {
+            ...((startDate || endDate) && {
+                startDate: {
+                    ...(startDate && { gte: startDate }),
+                    ...(endDate && { lte: endDate }),
+                },
+            }),
+            ...(role === Role.TEACHER ? { teacherId: id } : { studentId: id }),
+            ...(lessonStatus && { lessonStatus }),
+        }
+
+        const userSelect = {
+            select: {
+                id: true,
+                profile: {
+                    select: {
+                        name: true,
+                        surname: true,
+                        patronymic: true,
+                    },
+                },
+            },
+        }
+
         const [lessons, totalCount] = await Promise.all([
             this.prisma.lesson.findMany({
-                where: {
-                    ...((startTime || endTime) && {
-                        startDate: {
-                            ...(startTime && { gte: startTime }),
-                            ...(endTime && { lte: endTime }),
-                        },
-                    }),
-                    ...(role === Role.TEACHER ? { teacherId: id } : { studentId: id }),
-                    lessonStatus: LessonStatus.START_SOON,
-                },
+                where,
                 select: {
                     id: true,
                     startDate: true,
@@ -64,34 +81,12 @@ export class LessonsService {
                         select: {
                             lessonLink: true,
                             languageLevel: true,
-                            user: {
-                                select: {
-                                    id: true,
-                                    profile: {
-                                        select: {
-                                            name: true,
-                                            surname: true,
-                                            patronymic: true,
-                                        },
-                                    },
-                                },
-                            },
+                            user: userSelect,
                         },
                     },
                     Teacher: {
                         select: {
-                            User: {
-                                select: {
-                                    id: true,
-                                    profile: {
-                                        select: {
-                                            name: true,
-                                            surname: true,
-                                            patronymic: true,
-                                        },
-                                    },
-                                },
-                            },
+                            User: userSelect,
                         },
                     },
                 },
@@ -104,9 +99,7 @@ export class LessonsService {
             ...(skip || take
                 ? [
                       this.prisma.lesson.count({
-                          where: {
-                              ...(role === Role.TEACHER ? { teacherId: id } : { studentId: id }),
-                          },
+                          where,
                       }),
                   ]
                 : []),
@@ -123,6 +116,7 @@ export class LessonsService {
             id: chat.id,
             startDate: chat.startDate,
             link: chat.Student.lessonLink,
+            lessonStatus: chat.lessonStatus,
             student: {
                 name: chat.Student.user.profile.name,
                 surname: chat.Student.user.profile.surname,
