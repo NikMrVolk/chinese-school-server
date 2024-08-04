@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Res } from '@nestjs/common'
-import { LessonStatus, User } from '@prisma/client'
+import { LessonStatus, Role, User } from '@prisma/client'
 import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { LessonsService } from './lessons.service'
 import { CreateLessonDto } from './dto/lesson.dto'
@@ -16,30 +16,27 @@ export class LessonsController {
         private readonly lessonsCheckService: LessonsCheckService
     ) {}
 
-    @Admin()
-    @HttpCode(200)
     @Get()
-    async getLessons(@Query('status') status: LessonStatus) {
-        return this.lessonsService.getLessons(status)
-    }
-
-    @Get(':userId/users')
     async getLessonsByUserId(
-        @Param('userId') userId: string,
+        @Query('userRoleId') userRoleId: string,
+        @Query('role') role: Role,
         @Query('skip') skip: string,
         @Query('take') take: string,
         @Query('status') lessonStatus: LessonStatus,
         @Query('startDate') startDate: Date,
         @Query('endDate') endDate: Date,
+        @CurrentUser() currentUser: User,
         @Res({ passthrough: true }) res: Response
     ) {
-        const response = await this.lessonsService.getLessonsByUserId({
-            userId: +userId,
+        const response = await this.lessonsService.getLessons({
+            userRoleId: +userRoleId,
+            role: role,
             skip: +skip,
             take: +take,
             lessonStatus,
             startDate,
             endDate,
+            currentUser,
         })
 
         const { lessons, totalCount } = response

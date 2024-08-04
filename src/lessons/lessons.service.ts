@@ -11,40 +11,28 @@ export class LessonsService {
         private readonly usersService: UsersService
     ) {}
 
-    async getLessons(status?: LessonStatus) {
-        if (status && status !== 'NOT_CONFIRMED') {
-            throw new BadRequestException('Ошибка запроса')
-        }
-
-        return this.prisma.lesson.findMany({
-            where: {
-                ...(status && { lessonStatus: status }),
-            },
-            orderBy: {
-                startDate: 'asc',
-            },
-        })
-    }
-
-    async getLessonsByUserId({
-        userId,
+    async getLessons({
+        userRoleId,
+        role,
         skip,
         take,
         startDate,
         endDate,
         lessonStatus,
+        currentUser,
     }: {
-        userId: number
+        userRoleId?: number
+        role: Role
         skip?: number
         take?: number
         startDate?: Date
         endDate?: Date
         lessonStatus?: LessonStatus
+        currentUser: User
     }) {
-        const user = await this.usersService.getFullUserInfo(userId)
-
-        const role = user.role === Role.TEACHER ? Role.TEACHER : Role.STUDENT
-        const id = user.role === Role.TEACHER ? user.teacher.id : user.student.id
+        if (!userRoleId && !role && currentUser.role !== Role.ADMIN) {
+            throw new BadRequestException('Ошибка запроса')
+        }
 
         const where = {
             ...((startDate || endDate) && {
@@ -53,7 +41,15 @@ export class LessonsService {
                     ...(endDate && { lte: endDate }),
                 },
             }),
-            ...(role === Role.TEACHER ? { teacherId: id } : { studentId: id }),
+            ...(role &&
+                userRoleId && {
+                    ...(role === Role.TEACHER && {
+                        teacherId: userRoleId,
+                    }),
+                    ...(role === Role.STUDENT && {
+                        studentId: userRoleId,
+                    }),
+                }),
             ...(lessonStatus && { lessonStatus }),
         }
 
