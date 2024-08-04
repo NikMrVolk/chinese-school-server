@@ -22,7 +22,7 @@ export class LessonsController {
         @Query('role') role: Role,
         @Query('skip') skip: string,
         @Query('take') take: string,
-        @Query('status') lessonStatus: LessonStatus,
+        @Query('lessonStatus') lessonStatus: LessonStatus,
         @Query('startDate') startDate: Date,
         @Query('endDate') endDate: Date,
         @CurrentUser() currentUser: User,
