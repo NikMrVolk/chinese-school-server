@@ -103,7 +103,7 @@ export class LessonsService {
 
         if (lessons.length === 0) {
             return {
-                teacherChats: [],
+                lessons: [],
                 totalCount,
             }
         }
