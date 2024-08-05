@@ -29,7 +29,6 @@ export class LessonsController {
         @CurrentUser() currentUser: User,
         @Res({ passthrough: true }) res: Response
     ) {
-        console.log(lessonStatus)
         const response = await this.lessonsService.getLessons({
             userRoleId: +userRoleId,
             role: role,
