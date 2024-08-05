@@ -27,7 +27,7 @@ export class LessonsService {
         take?: number
         startDate?: Date
         endDate?: Date
-        lessonStatus?: LessonStatus
+        lessonStatus?: LessonStatus[]
         currentUser: User
     }) {
         if (!userRoleId && !role && currentUser.role !== Role.ADMIN) {
@@ -50,7 +50,14 @@ export class LessonsService {
                         studentId: userRoleId,
                     }),
                 }),
-            ...(lessonStatus && { lessonStatus }),
+            ...(lessonStatus.length > 0 && {
+                ...(lessonStatus.length === 1 && {
+                    lessonStatus: lessonStatus[0],
+                }),
+                ...(lessonStatus.length > 1 && {
+                    lessonStatus: { in: lessonStatus },
+                }),
+            }),
         }
 
         const userSelect = {

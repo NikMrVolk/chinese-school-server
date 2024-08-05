@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, Res } from '@nestjs/common'
+import { Body, Controller, Delete, Get, HttpCode, Param, ParseArrayPipe, Patch, Post, Query, Res } from '@nestjs/common'
 import { LessonStatus, Role, User } from '@prisma/client'
 import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { LessonsService } from './lessons.service'
@@ -22,12 +22,14 @@ export class LessonsController {
         @Query('role') role: Role,
         @Query('skip') skip: string,
         @Query('take') take: string,
-        @Query('lessonStatus') lessonStatus: LessonStatus,
+        @Query('lessonStatus', new ParseArrayPipe({ separator: ',' }))
+        lessonStatus: LessonStatus[],
         @Query('startDate') startDate: Date,
         @Query('endDate') endDate: Date,
         @CurrentUser() currentUser: User,
         @Res({ passthrough: true }) res: Response
     ) {
+        console.log(lessonStatus)
         const response = await this.lessonsService.getLessons({
             userRoleId: +userRoleId,
             role: role,
