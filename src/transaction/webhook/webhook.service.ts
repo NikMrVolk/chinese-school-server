@@ -59,7 +59,11 @@ export class WebhookService {
                 })
 
                 this.mailsService.sendRegistrationMail(Student.user.email, password)
+
+                return
             }
+
+            this.mailsService.sendSuccessBoughtMessage(Student.user.email, purchasedTariff.title)
         }
     }
 }

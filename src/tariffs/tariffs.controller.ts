@@ -1,18 +1,20 @@
 import { BadRequestException, Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Res } from '@nestjs/common'
 import { TariffsService } from './tariffs.service'
 import { Entity } from 'src/utils/types'
-import { Tariff } from '@prisma/client'
+import { Tariff, User } from '@prisma/client'
 import { EntityService } from '../utils/services/entity.service'
-import { Admin, Auth } from 'src/utils/decorators'
+import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { CreateTariffDto, UpdateTariffDto } from './dto/tariff.dto'
 import { Response } from 'express'
+import { TransactionService } from 'src/transaction/transaction.service'
 
 @Auth()
 @Controller('tariffs')
 export class TariffsController {
     constructor(
         private readonly tariffsService: TariffsService,
-        private readonly entityService: EntityService
+        private readonly entityService: EntityService,
+        private readonly transactionService: TransactionService
     ) {}
 
     @HttpCode(200)
@@ -56,5 +58,15 @@ export class TariffsController {
         if (isLast) return res.json({ message: 'Нельзя удалить последний тариф' })
 
         return await this.tariffsService.delete(+id)
+    }
+
+    @Auth()
+    @HttpCode(200)
+    @Post(':id/buy')
+    async buy(@Param('tariffId') tariffId: string, @CurrentUser() user: User) {
+        return this.transactionService.makePayment({
+            userId: user.id,
+            tariffId: +tariffId,
+        })
     }
 }

@@ -22,7 +22,6 @@ export class TariffsService {
                 isPopular: true,
                 completedHours: true,
                 paymentStatus: true,
-                paymentLink: true,
             },
         })
     }
@@ -48,40 +47,6 @@ export class TariffsService {
             select: this.generateTariffSelectObject(),
         })
     }
-
-    //todo fix deploy error
-    // async createPurchase({ student, tariffId }: { student: Partial<Student>; tariffId: number }) {
-    //     const selectedTariff = await this.prisma.tariff.findUnique({
-    //         where: {
-    //             id: tariffId,
-    //         },
-    //     })
-
-    //     if (!selectedTariff) {
-    //         throw new BadRequestException('Тариф не найден')
-    //     }
-
-    //     return this.prisma.purchasedTariff.create({
-    //         data: {
-    //             title: selectedTariff.title,
-    //             price: selectedTariff.price,
-    //             quantityHours: selectedTariff.quantityHours,
-    //             benefits: selectedTariff.benefits,
-    //             quantityWeeksActive: selectedTariff.quantityWeeksActive,
-    //             isRescheduleLessons: selectedTariff.isRescheduleLessons,
-
-    //             completedHours: 0,
-    //             // todo генерация ссылки для оплаты и отправка её на почту
-    //             paymentLink: 'paymentLink',
-    //             paymentStatus: PaymentStatus.IN_PROCESS,
-    //             Student: {
-    //                 connect: {
-    //                     id: student.id,
-    //                 },
-    //             },
-    //         },
-    //     })
-    // }
 
     async isTariffExist(tariffTitle: string) {
         const tariff = await this.prisma.tariff.findFirst({

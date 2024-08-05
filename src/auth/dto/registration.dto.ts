@@ -12,10 +12,6 @@ export class RegistrationStudentDto extends RegistrationDto {
     @IsString({ message: 'Неверный формат названия пакета' })
     packageTitle: string
 
-    @MinLength(2, { message: 'Cсылка должна быть больше 2х символов' })
-    @IsString({ message: 'Неверный формат ссылки для оплаты' })
-    paymentLink: string
-
     @MinLength(2, { message: 'Название тарифа должно быть больше 2х символов' })
     @IsString({ message: 'Проверьте название тарифа' })
     tariffTitle: string

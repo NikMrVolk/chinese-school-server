@@ -66,6 +66,21 @@ export class MailsService {
         })
     }
 
+    async sendSuccessBoughtMessage(email: string, tariffTitle: string) {
+        await this.template({
+            to: email,
+            subject: 'Успешная оплата',
+            template: 'buyTariff',
+            context: {
+                tariffTitle,
+                path: path.join(__dirname, 'templates'),
+                loginLink: `${process.env.CLIENT_URL}/auth`,
+                logoLink: process.env.CLIENT_LANDING_URL,
+                logoImageSrc: `${process.env.CLIENT_URL}/images/logo/blackLogo.${email.includes('@gmail.com') ? 'png' : 'svg'}`,
+            },
+        })
+    }
+
     private async template(options: ISendMailOptions) {
         try {
             await this.mailerService.sendMail(options)

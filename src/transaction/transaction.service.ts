@@ -104,8 +104,7 @@ export class TransactionService {
                 paymentId: payment.id,
                 paymentStatus: payment.status,
                 completedHours: 0,
-                paymentLink: '',
-                expiredIn: '',
+                expiredIn: null,
                 Student: {
                     connect: {
                         id: student.id,

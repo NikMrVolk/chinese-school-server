@@ -212,7 +212,6 @@ model PurchasedTariff {
 
     expiredIn      DateTime? @map("started_at")
     completedHours Int       @map("completed_hours")
-    paymentLink    String    @map("payment_link")
 
     paymentId     String        @unique @map("payment_id")
     paymentStatus PaymentStatus @map("payment_status")
