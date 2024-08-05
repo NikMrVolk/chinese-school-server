@@ -34,9 +34,11 @@ enum LessonStatus {
 }
 
 enum PaymentStatus {
-    SUCCESS
-    UN_SUCCESS
-    IN_PROCESS
+    pending
+    waiting_for_capture
+    succeeded
+    canceled
+    refunded
 }
 
 model User {
@@ -65,7 +67,7 @@ model Session {
     createdAt DateTime @default(now()) @map("created_at")
     updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-    expiredIn    DateTime @map("expired_in")
+    expiredIn DateTime @map("expired_in")
 
     userId Int  @map("user_id")
     User   User @relation(map: "user", fields: [userId], references: [id], onDelete: Cascade)
@@ -129,10 +131,10 @@ model Teacher {
     experience             Int
     description            String?
 
-    students  Student[]
-    notes     Note[]
-    lessons   Lesson[]
-    chats     Chat[]
+    students Student[]
+    notes    Note[]
+    lessons  Lesson[]
+    chats    Chat[]
 
     userId Int  @unique @map("user_id")
     User   User @relation(map: "user", fields: [userId], references: [id], onDelete: Cascade)
@@ -147,7 +149,7 @@ model Note {
 
     text String
 
-    studentId Int      @map("student_id") @unique()
+    studentId Int      @unique() @map("student_id")
     Student   Student  @relation(map: "student", fields: [studentId], references: [id], onDelete: Cascade)
     teacherId Int?
     Teacher   Teacher? @relation(map: "teacher", fields: [teacherId], references: [id], onDelete: Cascade)
@@ -167,7 +169,7 @@ model Student {
     lessons          Lesson[]
     homeworks        Homework[]
     chat             Chat?
-    Note      Note?
+    Note             Note?
 
     languageLevel LanguageLevel @map("language_level")
 
@@ -212,12 +214,12 @@ model PurchasedTariff {
     completedHours Int       @map("completed_hours")
     paymentLink    String    @map("payment_link")
 
+    paymentId     String        @unique @map("payment_id")
     paymentStatus PaymentStatus @map("payment_status")
 
-    lessons Lesson[]
-
-    studentId Int     @map("student_id")
-    Student   Student @relation(map: "student", fields: [studentId], references: [id], onDelete: Cascade)
+    studentId Int      @map("student_id")
+    Student   Student  @relation(map: "student", fields: [studentId], references: [id], onDelete: Cascade)
+    Lesson    Lesson[]
 
     @@map("purchased_tariffs")
 }
@@ -232,6 +234,7 @@ model Homework {
 
     studentId Int     @map("student_id")
     Student   Student @relation(map: "student", fields: [studentId], references: [id], onDelete: Cascade)
+
     @@map("homeworks")
 }
 

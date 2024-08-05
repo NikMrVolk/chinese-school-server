@@ -149,14 +149,6 @@ export class AuthController {
         return user
     }
 
-    // todo после реализации оплаты продумать как делается пользователь
-    // @HttpCode(200)
-    // @Post('registration/student/:id')
-    // async registrationStudent(@Body() dto: RegistrationStudentDto) {
-    //     const { refreshToken, ...response } = await this.authService.registrationStudent(dto)
-    //     return response
-    // }
-
     @HttpCode(200)
     @Post('access-token')
     async getNewTokens(@Req() req: Request, @Res({ passthrough: true }) res: Response) {

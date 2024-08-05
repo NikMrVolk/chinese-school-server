@@ -107,7 +107,7 @@ export class LessonsCheckService {
             const totalReservedHours = tariff.completedHours + scheduledLessons.length - (isReschedule ? 1 : 0)
 
             const isHoursEnded = totalReservedHours < tariff.quantityHours
-            const paymentStatusSuccess = tariff.paymentStatus === 'SUCCESS'
+            const paymentStatusSuccess = tariff.paymentStatus === 'succeeded'
             const notExpired = new Date().getDate() < new Date(tariff.expiredIn ? tariff.expiredIn : 0).getDate()
 
             return isHoursEnded && paymentStatusSuccess && notExpired

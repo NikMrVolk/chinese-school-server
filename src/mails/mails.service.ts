@@ -52,6 +52,20 @@ export class MailsService {
         })
     }
 
+    async sendPaymentLinkMail(email: string, link: string) {
+        await this.template({
+            to: email,
+            subject: 'Ссылка на оплату',
+            template: 'paymentLink',
+            context: {
+                link,
+                path: path.join(__dirname, 'templates'),
+                logoLink: process.env.CLIENT_LANDING_URL,
+                logoImageSrc: `${process.env.CLIENT_URL}/images/logo/blackLogo.${email.includes('@gmail.com') ? 'png' : 'svg'}`,
+            },
+        })
+    }
+
     private async template(options: ISendMailOptions) {
         try {
             await this.mailerService.sendMail(options)

@@ -9,11 +9,12 @@ import { FilesModule } from 'src/files/files.module'
 import { ChatsModule } from 'src/chats/chats.module'
 import { StudentsController } from './students.controller'
 import { StudentsService } from './students.service'
+import { TransactionModule } from 'src/transaction/transaction.module'
 
 @Module({
     controllers: [UsersController, StudentsController],
     providers: [PrismaService, UsersService, JwtService, StudentsService],
-    imports: [ConfigModule, MailsModule, FilesModule, ChatsModule],
+    imports: [ConfigModule, MailsModule, FilesModule, ChatsModule, TransactionModule],
     exports: [UsersService, StudentsService],
 })
 export class UsersModule {}

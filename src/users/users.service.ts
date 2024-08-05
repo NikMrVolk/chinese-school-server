@@ -10,6 +10,7 @@ import { MailsService } from 'src/mails/mails.service'
 import { FilesService } from 'src/files/files.service'
 import { ChangeTeacherInfoDto } from './dto/changeTeacherInfo.dto'
 import { ChatsService } from 'src/chats/chats.service'
+import { TransactionService } from 'src/transaction/transaction.service'
 
 @Injectable()
 export class UsersService {
@@ -17,7 +18,8 @@ export class UsersService {
         private mailsService: MailsService,
         private prisma: PrismaService,
         private filesService: FilesService,
-        private chatsService: ChatsService
+        private chatsService: ChatsService,
+        private transactionService: TransactionService
     ) {}
 
     async getCurrentUser({ currentUser, searchedUserId }: { currentUser: User; searchedUserId: number }) {
@@ -228,19 +230,17 @@ export class UsersService {
             },
         })
     }
-    async createStudent(dto: RegistrationStudentDto, tariff: Tariff, avatar?: Express.Multer.File) {
-        const password = generateRandomPassword(12, 15)
-        this.mailsService.sendRegistrationMail(dto.email, password)
 
+    async createStudent(dto: RegistrationStudentDto, tariff: Tariff, avatar?: Express.Multer.File) {
         let fileName: string
         if (avatar) {
             fileName = await this.filesService.createFile(avatar)
         }
 
-        return this.prisma.user.create({
+        const user = await this.prisma.user.create({
             data: {
                 email: dto.email,
-                password: await bcrypt.hash(password, 7),
+                password: null,
                 profile: {
                     create: {
                         name: dto.name,
@@ -256,20 +256,6 @@ export class UsersService {
                     create: {
                         packageTitle: dto.packageTitle,
                         languageLevel: dto.languageLevel,
-                        purchasedTariffs: {
-                            create: {
-                                title: tariff.title,
-                                price: tariff.price,
-                                quantityHours: tariff.quantityHours,
-                                benefits: tariff.benefits,
-                                quantityWeeksActive: tariff.quantityWeeksActive,
-                                isRescheduleLessons: tariff.isRescheduleLessons,
-                                isPopular: tariff.isPopular,
-                                completedHours: 0,
-                                paymentLink: dto.paymentLink,
-                                paymentStatus: 'IN_PROCESS',
-                            },
-                        },
                     },
                 },
             },
@@ -288,6 +274,15 @@ export class UsersService {
                 },
             },
         })
+
+        const { confirmationToken } = await this.transactionService.makePayment({
+            userId: user.id,
+            tariffId: tariff.id,
+        })
+
+        this.mailsService.sendPaymentLinkMail(user.email, `${process.env.CLIENT_URL}/payment/${confirmationToken}`)
+
+        return user
     }
 
     async createTeacher(
