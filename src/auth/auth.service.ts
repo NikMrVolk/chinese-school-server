@@ -30,23 +30,16 @@ export class AuthService {
             return { otp: true }
         }
 
-        const tokens = await this.issueTokens(user.id, user.role, dto.rememberMe)
-
-        return {
-            user,
-            ...tokens,
-        }
+        return user
     }
 
     async createSession({
         userId,
         sessions,
-        refreshToken,
         rememberMe,
     }: {
         userId: number
         sessions: Session[]
-        refreshToken: string
         rememberMe: boolean
     }) {
         if (sessions.length >= this.MAX_QUANTITY_SESSIONS) {
@@ -57,67 +50,43 @@ export class AuthService {
             })
         }
 
-        await this.prisma.user.update({
-            where: {
-                id: userId,
-            },
+        return this.prisma.session.create({
             data: {
-                session: {
-                    create: {
-                        refreshToken,
-                        expiredIn: new Date(Date.now() + 1000 * 60 * 60 * (rememberMe ? 24 * 30 : 8)),
+                expiredIn: new Date(Date.now() + 1000 * 60 * 60 * (rememberMe ? 24 * 30 : 8)),
+                User: {
+                    connect: {
+                        id: userId,
                     },
                 },
             },
         })
     }
 
-    async checkSession(userId: number, refreshToken: string) {
-        const sessions = await this.prisma.session.findMany({
-            where: {
-                userId,
-            },
-        })
-
-        if (sessions.length === 0) {
-            return false
-        }
-
-        const currentSession = sessions.find(session => session.refreshToken === refreshToken)
-
-        if (!currentSession) {
-            return false
-        }
-
-        if (currentSession.expiredIn.getDate() > Date.now()) {
-            await this.prisma.session.delete({
-                where: {
-                    id: currentSession.id,
-                },
-            })
-
-            return false
-        }
-
-        return currentSession.id
-    }
-
-    async addNewTokenToSession(sessionId: number, refreshToken: string) {
-        await this.prisma.session.update({
+    async checkSession(sessionId: number) {
+        const session = await this.prisma.session.findUnique({
             where: {
                 id: sessionId,
             },
-            data: {
-                refreshToken,
-            },
         })
+        if (!session) {
+            return false
+        }
+        if (session.expiredIn.getDate() > Date.now()) {
+            await this.prisma.session.delete({
+                where: {
+                    id: sessionId,
+                },
+            })
+            return false
+        }
+
+        return sessionId
     }
 
-    async deleteSessionWithUserIdAndRefreshToken(userId: number, refreshToken: string) {
+    async deleteSession(userId: number) {
         await this.prisma.session.deleteMany({
             where: {
                 userId,
-                refreshToken,
             },
         })
     }
@@ -176,12 +145,7 @@ export class AuthService {
             },
         })
 
-        const tokens = await this.issueTokens(user.id, user.role)
-
-        return {
-            user,
-            ...tokens,
-        }
+        return user
     }
 
     private async checkOtp(user: Partial<User>, otp: Otp, otpToCheck: string) {
@@ -270,7 +234,12 @@ export class AuthService {
 
             const { password, ...user } = await this.usersService.getById(result.id)
 
-            const tokens = await this.issueTokens(user.id, user.role)
+            const tokens = await this.issueTokens({
+                userId: user.id,
+                role: user.role,
+                rememberMe: result.rememberMe,
+                sessionId: result.sessionId,
+            })
 
             return {
                 user,
@@ -282,11 +251,21 @@ export class AuthService {
         }
     }
 
-    private async issueTokens(userId: number, role: Role = Role.STUDENT, rememberMe: boolean = false) {
-        const data = { id: userId, role }
+    async issueTokens({
+        userId,
+        role = Role.STUDENT,
+        rememberMe = false,
+        sessionId,
+    }: {
+        userId: number
+        role: Role
+        rememberMe: boolean
+        sessionId?: number
+    }) {
+        const data = { id: userId, role, sessionId }
 
         const accessToken = this.jwt.sign(data, {
-            expiresIn: '15m',
+            expiresIn: '15s',
         })
 
         const refreshToken = this.jwt.sign(data, {

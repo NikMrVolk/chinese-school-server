@@ -38,43 +38,57 @@ export class AuthController {
     @HttpCode(200)
     @Post('login')
     async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
-        const userWithTokenOrOtp = await this.authService.login(dto)
+        const userOrOtp = await this.authService.login(dto)
 
-        if ('otp' in userWithTokenOrOtp) {
-            return { ...userWithTokenOrOtp, date: new Date() }
+        if ('otp' in userOrOtp) {
+            return { ...userOrOtp, date: new Date() }
         }
 
-        const { refreshToken, ...response } = userWithTokenOrOtp
+        const user = userOrOtp
 
-        await this.authService.createSession({
-            userId: response.user.id,
-            sessions: response.user.session,
-            refreshToken,
+        const session = await this.authService.createSession({
+            userId: user.id,
+            sessions: user.session,
             rememberMe: dto.rememberMe,
         })
-        this.addRefreshTokenToResponse(res, refreshToken, dto.rememberMe)
 
-        const { otps, session, passwordReset, ...userToResponse } = response.user
+        const tokens = await this.authService.issueTokens({
+            userId: user.id,
+            role: user.role,
+            rememberMe: dto.rememberMe,
+            sessionId: session.id,
+        })
 
-        return { user: userToResponse, accessToken: response.accessToken }
+        this.addRefreshTokenToResponse(res, tokens.refreshToken, dto.rememberMe)
+
+        const { otps, session: userSessions, passwordReset, ...userToResponse } = user
+
+        return { user: userToResponse, accessToken: tokens.accessToken }
     }
 
     @HttpCode(200)
     @Post('otp')
     async loginOtp(@Body() dto: LoginWithOtpDto, @Res({ passthrough: true }) res: Response) {
-        const { refreshToken, ...response } = await this.authService.loginWithOtp(dto)
+        const user = await this.authService.loginWithOtp(dto)
 
-        await this.authService.createSession({
-            userId: response.user.id,
-            sessions: response.user.session,
-            refreshToken,
+        const session = await this.authService.createSession({
+            userId: user.id,
+            sessions: user.session,
             rememberMe: dto.rememberMe,
         })
-        this.addRefreshTokenToResponse(res, refreshToken, dto.rememberMe)
 
-        const { otps, session, password, passwordReset, ...userToResponse } = response.user
+        const tokens = await this.authService.issueTokens({
+            userId: user.id,
+            role: user.role,
+            rememberMe: dto.rememberMe,
+            sessionId: session.id,
+        })
 
-        return { user: userToResponse, accessToken: response.accessToken }
+        this.addRefreshTokenToResponse(res, tokens.refreshToken, dto.rememberMe)
+
+        const { otps, session: userSessions, password, passwordReset, ...userToResponse } = user
+
+        return { user: userToResponse, accessToken: tokens.accessToken }
     }
 
     @HttpCode(200)
@@ -155,25 +169,24 @@ export class AuthController {
         }
 
         let userId: number
+        let sessionIdFromJwt: number
         try {
-            userId = this.jwt.decode<JwtPayload>(refreshTokenFromCookies)?.id
+            userId = this.jwt.decode<JwtPayload>(refreshTokenFromCookies).id
+            sessionIdFromJwt = this.jwt.decode<JwtPayload>(refreshTokenFromCookies).sessionId
         } catch (error) {
             console.error(error)
         }
 
-        if (!userId) {
+        if (!userId && !sessionIdFromJwt) {
             this.removeRefreshTokenFromResponse(res)
             throw new UnauthorizedException('Invalid refresh token')
         }
-
-        const sessionId = await this.authService.checkSession(userId, refreshTokenFromCookies)
+        const sessionId = await this.authService.checkSession(sessionIdFromJwt)
         if (!sessionId) {
             this.removeRefreshTokenFromResponse(res)
             throw new UnauthorizedException('Invalid refresh token')
         }
-
         const { refreshToken, ...response } = await this.authService.getNewTokens(refreshTokenFromCookies)
-        await this.authService.addNewTokenToSession(sessionId, refreshToken)
         this.addRefreshTokenToResponse(res, refreshToken, rememberMe)
         return response
     }
@@ -181,10 +194,8 @@ export class AuthController {
     @Auth()
     @HttpCode(200)
     @Post('logout')
-    async userLogout(@Req() req: Request, @Res({ passthrough: true }) res: Response, @CurrentUser() currentUser: User) {
-        const refreshTokenFromCookies = req.cookies[this.REFRESH_TOKEN_NAME]
-
-        await this.authService.deleteSessionWithUserIdAndRefreshToken(currentUser.id, refreshTokenFromCookies)
+    async userLogout(@Res({ passthrough: true }) res: Response, @CurrentUser() currentUser: User) {
+        await this.authService.deleteSession(currentUser.id)
         this.removeRefreshTokenFromResponse(res)
 
         return true

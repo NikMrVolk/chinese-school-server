@@ -8,4 +8,5 @@ export enum Entity {
 export interface JwtPayload {
     id: number
     role: Role
+    sessionId: number
 }
