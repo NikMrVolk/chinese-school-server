@@ -131,7 +131,7 @@ export class ChatsService {
             fileUrl = await this.filesService.createFile(file)
         }
 
-        let isDayChange = true
+        let isDayChange = false
         if (lastMessageTimestamp) {
             isDayChange = new Date(lastMessageTimestamp).getDay() === new Date().getDay() ? false : true
         }

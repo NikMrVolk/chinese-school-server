@@ -1,6 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { PrismaService } from 'src/prisma.service'
 import { TariffDto } from './dto/tariff.dto'
+import { Cron, CronExpression } from '@nestjs/schedule'
+import { PaymentStatus } from '@prisma/client'
 
 @Injectable()
 export class TariffsService {
@@ -9,7 +11,7 @@ export class TariffsService {
     async getAllStudentTariffs(studentId: number) {
         return this.prisma.purchasedTariff.findMany({
             where: {
-                id: studentId,
+                studentId: studentId,
             },
             select: {
                 id: true,
@@ -22,6 +24,8 @@ export class TariffsService {
                 isPopular: true,
                 completedHours: true,
                 paymentStatus: true,
+                expiredIn: true,
+                tariffId: true,
             },
         })
     }
@@ -128,5 +132,23 @@ export class TariffsService {
             isRescheduleLessons: true,
             isPopular: true,
         }
+    }
+    с
+
+    @Cron(CronExpression.EVERY_30_MINUTES)
+    async deleteNotBoughtTariffs() {
+        const hourAgo = new Date()
+        hourAgo.setHours(hourAgo.getHours() - 1)
+
+        await this.prisma.purchasedTariff.deleteMany({
+            where: {
+                createdAt: {
+                    lt: hourAgo,
+                },
+                paymentStatus: {
+                    not: PaymentStatus.succeeded,
+                },
+            },
+        })
     }
 }

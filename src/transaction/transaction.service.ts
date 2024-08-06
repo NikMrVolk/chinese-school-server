@@ -100,11 +100,12 @@ export class TransactionService {
                 quantityHours: tariff.quantityHours,
                 quantityWeeksActive: tariff.quantityWeeksActive,
                 isRescheduleLessons: tariff.isRescheduleLessons,
-                isPopular: tariff.isPopular,
+                isPopular: false,
                 paymentId: payment.id,
                 paymentStatus: payment.status,
                 completedHours: 0,
                 expiredIn: null,
+                tariffId: tariff.id,
                 Student: {
                     connect: {
                         id: student.id,
