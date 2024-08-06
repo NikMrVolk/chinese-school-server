@@ -8,15 +8,24 @@ import { PaymentStatus } from '@prisma/client'
 export class TariffsService {
     constructor(private readonly prisma: PrismaService) {}
 
-    async getAllStudentTariffs(studentId: number) {
+    async getAllStudentTariffs(studentId: number, paymentStatus: PaymentStatus[]) {
         return this.prisma.purchasedTariff.findMany({
             where: {
                 studentId: studentId,
+                ...(paymentStatus.length > 0 && {
+                    ...(paymentStatus.length === 1 && {
+                        paymentStatus: paymentStatus[0],
+                    }),
+                    ...(paymentStatus.length > 1 && {
+                        paymentStatus: { in: paymentStatus },
+                    }),
+                }),
             },
             select: {
                 id: true,
                 title: true,
                 price: true,
+                createdAt: true,
                 quantityHours: true,
                 benefits: true,
                 quantityWeeksActive: true,

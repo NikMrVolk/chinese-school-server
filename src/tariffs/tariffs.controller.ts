@@ -1,7 +1,20 @@
-import { BadRequestException, Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Res } from '@nestjs/common'
+import {
+    BadRequestException,
+    Body,
+    Controller,
+    Delete,
+    Get,
+    HttpCode,
+    Param,
+    ParseArrayPipe,
+    Patch,
+    Post,
+    Query,
+    Res,
+} from '@nestjs/common'
 import { TariffsService } from './tariffs.service'
 import { Entity } from 'src/utils/types'
-import { Tariff, User } from '@prisma/client'
+import { PaymentStatus, Tariff, User } from '@prisma/client'
 import { EntityService } from '../utils/services/entity.service'
 import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { CreateTariffDto, UpdateTariffDto } from './dto/tariff.dto'
@@ -25,8 +38,12 @@ export class TariffsController {
 
     @HttpCode(200)
     @Get(':id')
-    async getOne(@Param('id') id: string) {
-        return this.tariffsService.getAllStudentTariffs(+id)
+    async getOne(
+        @Param('id') id: string,
+        @Query('paymentStatus', new ParseArrayPipe({ separator: ',' }))
+        paymentStatus: PaymentStatus[]
+    ) {
+        return this.tariffsService.getAllStudentTariffs(+id, paymentStatus)
     }
 
     @Admin()
