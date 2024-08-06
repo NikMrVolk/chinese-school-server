@@ -15,7 +15,7 @@ export class YookassaService {
                 currency,
                 value: total,
             },
-            description: `Оплата тарифа ${items[0].description} | ${customerEmail}`,
+            description: items[0].description,
             receipt: {
                 customer: {
                     email: customerEmail,
@@ -27,7 +27,6 @@ export class YookassaService {
                 type: 'embedded',
                 locale: LocaleEnum.ru_RU,
             },
-            save_payment_method: true,
         }
 
         return this.request<ObjectPayment | null>('POST', 'payments', payload)
