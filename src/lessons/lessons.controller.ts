@@ -63,13 +63,17 @@ export class LessonsController {
 
         const purchasedTariff = await this.lessonsCheckService.isStudentHasHours({ dto, studentId: +studentId })
 
-        return this.lessonsService.create({
+        const lesson = await this.lessonsService.create({
             teacherId: +teacherId,
             studentId: +studentId,
             dto,
             currentUser,
             purchasedTariff,
         })
+
+        await this.lessonsService.createMeeting(lesson, currentUser)
+
+        return lesson
     }
 
     @HttpCode(200)

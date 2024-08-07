@@ -6,10 +6,14 @@ import { JwtService } from '@nestjs/jwt'
 import { MailsModule } from 'src/mails/mails.module'
 import { UsersModule } from 'src/users/users.module'
 import { LessonsCheckService } from './lessonsCheck.service'
+import { ZoomService } from './zoom/zoom.service'
+import { HttpModule } from '@nestjs/axios'
+import { WebhookController } from 'src/transaction/webhook/webhook.controller'
+import { WebhookService } from 'src/transaction/webhook/webhook.service'
 
 @Module({
-    controllers: [LessonsController],
-    providers: [LessonsService, LessonsCheckService, PrismaService, JwtService],
-    imports: [MailsModule, UsersModule, UsersModule],
+    imports: [MailsModule, UsersModule, UsersModule, HttpModule],
+    controllers: [LessonsController, WebhookController],
+    providers: [LessonsService, LessonsCheckService, PrismaService, JwtService, ZoomService, WebhookService],
 })
 export class LessonsModule {}

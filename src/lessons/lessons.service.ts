@@ -1,14 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { LessonStatus, PurchasedTariff, Role, User } from '@prisma/client'
+import { Lesson, LessonStatus, PurchasedTariff, Role, User } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
 import { CreateLessonDto } from './dto/lesson.dto'
-import { UsersService } from 'src/users/users.service'
+import { ZoomService } from './zoom/zoom.service'
 
 @Injectable()
 export class LessonsService {
     constructor(
         private readonly prisma: PrismaService,
-        private readonly usersService: UsersService
+        private readonly zoomService: ZoomService
     ) {}
 
     async getLessons({
@@ -227,5 +227,13 @@ export class LessonsService {
             console.error(error)
             throw new BadRequestException('Произошла ошибка при удалении урока')
         }
+    }
+
+    async createMeeting(lesson: Lesson, currentUser: User) {
+        if (currentUser.role !== Role.ADMIN) {
+            return
+        }
+
+        await this.zoomService.createMeeting(lesson)
     }
 }
