@@ -6,16 +6,19 @@ import { CreateLessonDto } from './dto/lesson.dto'
 import { StudentsService } from 'src/users/students.service'
 import { LessonsCheckService } from './lessonsCheck.service'
 import { Response } from 'express'
+import { EndedLessonWebhook } from './webhook.types'
+import { ZoomService } from './zoom/zoom.service'
 
-@Auth()
 @Controller('lessons')
 export class LessonsController {
     constructor(
         private readonly lessonsService: LessonsService,
         private readonly studentsService: StudentsService,
-        private readonly lessonsCheckService: LessonsCheckService
+        private readonly lessonsCheckService: LessonsCheckService,
+        private readonly zoomService: ZoomService
     ) {}
 
+    @Auth()
     @Get()
     async getLessonsByUserId(
         @Query('userRoleId') userRoleId: string,
@@ -49,6 +52,7 @@ export class LessonsController {
         return lessons
     }
 
+    @Auth()
     @HttpCode(200)
     @Post(':teacherId/:studentId')
     async createLesson(
@@ -76,6 +80,7 @@ export class LessonsController {
         return lesson
     }
 
+    @Auth()
     @HttpCode(200)
     @Patch(':teacherId/:studentId/reschedule/:lessonId')
     async reschedule(
@@ -98,6 +103,7 @@ export class LessonsController {
         })
     }
 
+    @Auth()
     @Admin()
     @HttpCode(200)
     @Patch(':lessonId')
@@ -105,10 +111,19 @@ export class LessonsController {
         return this.lessonsService.confirm(+lessonId)
     }
 
+    @Auth()
     @Admin()
     @HttpCode(200)
     @Delete(':lessonId')
     async delete(@Param('lessonId') lessonId: number) {
         return this.lessonsService.delete(+lessonId)
+    }
+
+    @HttpCode(200)
+    @Post('webhook')
+    async webhook(@Body() dto: EndedLessonWebhook) {
+        console.log('Zoom послал запрос')
+        console.log(dto)
+        return this.zoomService.lessonEnded(dto)
     }
 }

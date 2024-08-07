@@ -4,6 +4,7 @@ import { BadRequestException, Injectable } from '@nestjs/common'
 import { GetMeetingQueryParams, GetPastMeetingDetailsResponse } from './zoom.types'
 import { Lesson } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
+import { EndedLessonWebhook } from '../webhook.types'
 
 @Injectable()
 export class ZoomService {
@@ -204,5 +205,9 @@ export class ZoomService {
             console.log(e)
             throw new BadRequestException('Ошибка при удалении встречи в zoom')
         }
+    }
+
+    async lessonEnded(dto: EndedLessonWebhook) {
+        console.log('validation dto', dto)
     }
 }
