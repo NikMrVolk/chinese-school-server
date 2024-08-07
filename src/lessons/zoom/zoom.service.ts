@@ -2,9 +2,10 @@ import { HttpService } from '@nestjs/axios'
 
 import { BadRequestException, Injectable } from '@nestjs/common'
 import { GetMeetingQueryParams, GetPastMeetingDetailsResponse } from './zoom.types'
-import { Lesson } from '@prisma/client'
+import { LessonStatus } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
 import { EndedLessonWebhook } from '../webhook.types'
+import { CreateLessonDto } from '../dto/lesson.dto'
 
 @Injectable()
 export class ZoomService {
@@ -91,14 +92,14 @@ export class ZoomService {
         }
     }
 
-    async createMeeting(lesson: Lesson) {
+    async createMeeting(dto: CreateLessonDto, teacherId: number, studentId: number) {
         const accessToken = await this.getToken()
 
         const {
             User: { profile: teacherProfile },
         } = await this.prisma.teacher.findUnique({
             where: {
-                id: lesson.teacherId,
+                id: teacherId,
             },
             select: {
                 User: {
@@ -118,7 +119,7 @@ export class ZoomService {
             user: { profile: studentProfile },
         } = await this.prisma.student.findUnique({
             where: {
-                id: lesson.studentId,
+                id: studentId,
             },
             select: {
                 user: {
@@ -135,13 +136,13 @@ export class ZoomService {
         })
 
         try {
-            const data = await this.httpService.axiosRef.request({
+            const data = await this.httpService.axiosRef.request<{ id: number; join_url: string }>({
                 method: 'POST',
                 url: this.ZOOM_BASE_API_URL + 'users/me/meetings',
                 timeout: this.DEFAULT_TIMEOUT,
                 data: JSON.stringify({
                     topic: `Занятие ${teacherProfile.name} ${teacherProfile.surname} и ${studentProfile.name} ${studentProfile.surname}`,
-                    start_time: lesson.startDate.toISOString().replace('000Z', '00Z'),
+                    start_time: dto.startDate,
                     type: this.DEFAULT_MEET_TYPE,
                     duration: this.DEFAULT_MEET_DURATION,
                     timezone: this.DEFAULT_MEET_TIMEZONE,
@@ -154,6 +155,15 @@ export class ZoomService {
                 headers: {
                     'Content-Type': 'application/json',
                     Authorization: `Bearer ${accessToken}`,
+                },
+            })
+
+            await this.prisma.student.update({
+                where: {
+                    id: studentId,
+                },
+                data: {
+                    lessonLink: data.data.join_url,
                 },
             })
 
@@ -222,7 +232,7 @@ export class ZoomService {
             const stack = []
 
             for (const participant of participants) {
-                if (participant.duration > 10) {
+                if (participant.duration > 300) {
                     stack.push(participant)
                 }
             }
@@ -230,6 +240,21 @@ export class ZoomService {
             if (stack.length >= 2) {
                 console.log(stack)
                 console.log('занятие защитано')
+
+                const lesson = await this.prisma.lesson.findFirst({
+                    where: {
+                        meetingId: String(meetingId),
+                    },
+                })
+
+                await this.prisma.lesson.update({
+                    where: {
+                        id: lesson.id,
+                    },
+                    data: {
+                        lessonStatus: LessonStatus.ALL_SUCCESS,
+                    },
+                })
             }
         }
     }

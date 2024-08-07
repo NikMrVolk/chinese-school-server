@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
-import { Lesson, LessonStatus, PurchasedTariff, Role, User } from '@prisma/client'
+import { LessonStatus, PurchasedTariff, Role, User } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
 import { CreateLessonDto } from './dto/lesson.dto'
 import { ZoomService } from './zoom/zoom.service'
@@ -147,19 +147,25 @@ export class LessonsService {
         dto,
         currentUser,
         purchasedTariff,
+        meetingId,
     }: {
         teacherId: number
         studentId: number
         dto: CreateLessonDto
         currentUser: User
         purchasedTariff: PurchasedTariff
+        meetingId: number
     }) {
         const lessonStatus = currentUser.role === Role.TEACHER ? LessonStatus.NOT_CONFIRMED : LessonStatus.START_SOON
+
+        console.log(meetingId)
+        console.log(typeof meetingId)
 
         return this.prisma.lesson.create({
             data: {
                 startDate: dto.startDate,
                 lessonStatus,
+                meetingId: String(meetingId),
 
                 PurchasedTariff: {
                     connect: {
@@ -229,11 +235,11 @@ export class LessonsService {
         }
     }
 
-    async createMeeting(lesson: Lesson, currentUser: User) {
+    async createMeeting(dto: CreateLessonDto, teacherId: number, studentId: number, currentUser: User) {
         if (currentUser.role !== Role.ADMIN) {
             return
         }
 
-        await this.zoomService.createMeeting(lesson)
+        return this.zoomService.createMeeting(dto, teacherId, studentId)
     }
 }
