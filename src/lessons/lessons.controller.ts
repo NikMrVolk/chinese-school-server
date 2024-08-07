@@ -8,6 +8,7 @@ import { LessonsCheckService } from './lessonsCheck.service'
 import { Response } from 'express'
 import { EndedLessonWebhook } from './webhook.types'
 import { ZoomService } from './zoom/zoom.service'
+import { createHmac } from 'node:crypto'
 
 @Controller('lessons')
 export class LessonsController {
@@ -121,9 +122,20 @@ export class LessonsController {
 
     @HttpCode(200)
     @Post('webhook')
-    async webhook(@Body() dto: EndedLessonWebhook) {
-        console.log('Zoom послал запрос')
-        console.log(dto)
+    async webhook(@Body() dto: EndedLessonWebhook, @Res() res: Response) {
+        if ('plainToken' in dto.payload) {
+            const plainToken = dto.payload.plainToken
+
+            const hmac = createHmac('sha256', process.env.ZOOM_CLIENT_SECRET)
+            hmac.update(plainToken)
+            const encryptedToken = hmac.digest('hex')
+
+            return res.json({
+                plainToken,
+                encryptedToken,
+            })
+        }
+
         return this.zoomService.lessonEnded(dto)
     }
 }
