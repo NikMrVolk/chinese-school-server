@@ -130,7 +130,12 @@ export class LessonsController {
             hmac.update(plainToken)
             const encryptedToken = hmac.digest('hex')
 
-            return res.json({
+            console.log({
+                plainToken,
+                encryptedToken,
+            })
+
+            return res.status(200).json({
                 plainToken,
                 encryptedToken,
             })
