@@ -126,14 +126,9 @@ export class LessonsController {
         if ('plainToken' in dto.payload) {
             const plainToken = dto.payload.plainToken
 
-            const hmac = createHmac('sha256', process.env.ZOOM_CLIENT_SECRET)
+            const hmac = createHmac('sha256', process.env.ZOOM_WEBHOOK_SECRET)
             hmac.update(plainToken)
             const encryptedToken = hmac.digest('hex')
-
-            console.log({
-                plainToken,
-                encryptedToken,
-            })
 
             return res.status(200).json({
                 plainToken,
