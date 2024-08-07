@@ -70,7 +70,9 @@ export class ZoomService {
         }
     }
 
-    async getMeetingDetails(meetingId: string, accessToken: string) {
+    async getMeetingDetails(meetingId: string) {
+        const accessToken = await this.getToken()
+
         try {
             const data = await this.httpService.axiosRef.request<GetPastMeetingDetailsResponse>({
                 method: 'GET',
@@ -139,7 +141,7 @@ export class ZoomService {
                 timeout: this.DEFAULT_TIMEOUT,
                 data: JSON.stringify({
                     topic: `Занятие ${teacherProfile.name} ${teacherProfile.surname} и ${studentProfile.name} ${studentProfile.surname}`,
-                    start_time: lesson.startDate.toISOString(),
+                    start_time: lesson.startDate.toISOString().replace('000Z', '00Z'),
                     type: this.DEFAULT_MEET_TYPE,
                     duration: this.DEFAULT_MEET_DURATION,
                     timezone: this.DEFAULT_MEET_TIMEZONE,
@@ -208,6 +210,27 @@ export class ZoomService {
     }
 
     async lessonEnded(dto: EndedLessonWebhook) {
-        console.log('validation dto', dto)
+        if ('object' in dto.payload) {
+            const meetingId = dto.payload.object.id
+
+            const meetingDetails = await this.getMeetingDetails(meetingId)
+
+            console.log(meetingDetails)
+
+            const participants = meetingDetails.participants
+
+            const stack = []
+
+            for (const participant of participants) {
+                if (participant.duration > 10) {
+                    stack.push(participant)
+                }
+            }
+
+            if (stack.length >= 2) {
+                console.log(stack)
+                console.log('занятие защитано')
+            }
+        }
     }
 }

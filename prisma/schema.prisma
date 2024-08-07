@@ -245,7 +245,9 @@ model Lesson {
 
     startDate DateTime @map("start_date")
 
-    lessonStatus LessonStatus @map("lesson_status")
+    lessonStatus  LessonStatus @map("lesson_status")
+    meetingId     Int?         @map("meeting_id")
+    isRescheduled Boolean      @default(false) @map("is_rescheduled")
 
     teacherId         Int              @map("teacher_id")
     Teacher           Teacher          @relation(map: "teacher", fields: [teacherId], references: [id], onDelete: Cascade)

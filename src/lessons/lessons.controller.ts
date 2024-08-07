@@ -136,8 +136,6 @@ export class LessonsController {
             })
         }
 
-        console.log('webhook', dto)
-
         return this.zoomService.lessonEnded(dto)
     }
 }
