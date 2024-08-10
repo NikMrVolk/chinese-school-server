@@ -100,6 +100,11 @@ export class UsersService {
                     },
                 },
             },
+            orderBy: {
+                profile: {
+                    surname: 'asc',
+                },
+            },
         })
     }
 
