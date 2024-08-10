@@ -246,7 +246,7 @@ model Lesson {
     startDate DateTime @map("start_date")
 
     lessonStatus  LessonStatus @map("lesson_status")
-    meetingId     String?         @map("meeting_id")
+    meetingId     String?      @map("meeting_id")
     isRescheduled Boolean      @default(false) @map("is_rescheduled")
 
     teacherId         Int              @map("teacher_id")

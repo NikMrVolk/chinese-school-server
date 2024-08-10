@@ -2,7 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/com
 import * as bcrypt from 'bcrypt'
 import { PrismaService } from 'src/prisma.service'
 import { RegistrationDto, RegistrationStudentDto, RegistrationTeacherDto } from '../auth/dto/registration.dto'
-import { Role, Tariff, User } from '@prisma/client'
+import { LessonStatus, Role, Tariff, User } from '@prisma/client'
 import { generateRandomPassword } from 'src/utils/helpers'
 import { ProfileDto } from 'src/auth/dto/profile.dto'
 import { ChangeProfileDto } from './dto/ChangeProfile.dto'
@@ -60,52 +60,95 @@ export class UsersService {
         throw new BadRequestException('Пользователь не найден')
     }
 
-    async getUsers({ role, teacherId, withoutTeacher }: { role?: Role; teacherId?: number; withoutTeacher?: boolean }) {
-        return this.prisma.user.findMany({
-            where: {
-                ...(role && { role }),
-                ...(teacherId && {
-                    student: {
-                        teacherId: teacherId,
-                    },
-                }),
-                ...(withoutTeacher && {
-                    student: {
-                        Teacher: null,
-                    },
-                }),
-            },
-            select: {
-                email: true,
-                id: true,
-                password: true,
-                role: true,
-                profile: this.generateProfileSelectObject(),
-                teacher: {
-                    select: {
-                        id: true,
-                        experience: true,
-                        description: true,
-                        youtubeVideoId: true,
-                        youtubeVideoPreviewUrl: true,
-                        students: true,
-                    },
-                },
+    async getUsers({
+        role,
+        teacherId,
+        withoutTeacher,
+        skip,
+        take,
+    }: {
+        role?: Role
+        teacherId?: number
+        withoutTeacher?: boolean
+        skip?: number
+        take?: number
+    }) {
+        const where = {
+            ...(role && { role }),
+            ...(teacherId && {
                 student: {
-                    select: {
-                        id: true,
-                        packageTitle: true,
-                        languageLevel: true,
-                        teacherId: true,
+                    teacherId: teacherId,
+                },
+            }),
+            ...(withoutTeacher && {
+                student: {
+                    Teacher: null,
+                },
+            }),
+        }
+
+        const select = {
+            email: true,
+            id: true,
+            password: true,
+            role: true,
+            profile: this.generateProfileSelectObject(),
+            teacher: {
+                select: {
+                    id: true,
+                    experience: true,
+                    description: true,
+                    youtubeVideoId: true,
+                    youtubeVideoPreviewUrl: true,
+                    students: true,
+                },
+            },
+            student: {
+                select: {
+                    id: true,
+                    packageTitle: true,
+                    languageLevel: true,
+                    teacherId: true,
+                    ...(teacherId && {
+                        lessons: {
+                            select: {
+                                startDate: true,
+                            },
+                            where: {
+                                lessonStatus: LessonStatus.START_SOON,
+                                startDate: {
+                                    gt: new Date(),
+                                },
+                            },
+                            take: 1,
+                        },
+                    }),
+                },
+            },
+        }
+
+        const [users, totalCount] = await Promise.all([
+            this.prisma.user.findMany({
+                where,
+                select,
+                orderBy: {
+                    profile: {
+                        surname: 'asc',
                     },
                 },
-            },
-            orderBy: {
-                profile: {
-                    surname: 'asc',
-                },
-            },
-        })
+                ...(skip && { skip }),
+                ...(take && { take }),
+            }),
+            ...(skip || take
+                ? [
+                      this.prisma.user.count({
+                          where,
+                      }),
+                  ]
+                : []),
+        ])
+
+        return { users, totalCount }
     }
 
     async getTeacherInfo(teacherId: number, currentUser: User) {

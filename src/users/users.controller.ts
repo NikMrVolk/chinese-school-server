@@ -31,9 +31,26 @@ export class UsersController {
     async getAllUsers(
         @Query('role') role: Role,
         @Query('teacherId') teacherId: string,
-        @Query('withoutTeacher') withoutTeacher: boolean
+        @Query('withoutTeacher') withoutTeacher: boolean,
+        @Query('skip') skip: string,
+        @Query('take') take: string,
+        @Res({ passthrough: true }) res: Response
     ) {
-        return this.usersService.getUsers({ role, teacherId: +teacherId, withoutTeacher })
+        const response = await this.usersService.getUsers({
+            role,
+            teacherId: +teacherId,
+            withoutTeacher,
+            skip: +skip,
+            take: +take,
+        })
+
+        const { users, totalCount } = response
+        if (totalCount) {
+            res.header('Access-Control-Expose-Headers', 'X-Total-Count')
+            res.header('X-Total-Count', totalCount.toString())
+        }
+
+        return users
     }
 
     @Auth()
