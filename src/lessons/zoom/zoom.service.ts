@@ -158,15 +158,6 @@ export class ZoomService {
                 },
             })
 
-            await this.prisma.student.update({
-                where: {
-                    id: studentId,
-                },
-                data: {
-                    lessonLink: data.data.join_url,
-                },
-            })
-
             return data.data
         } catch (e) {
             console.log(e)

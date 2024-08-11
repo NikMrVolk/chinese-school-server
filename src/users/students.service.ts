@@ -16,9 +16,23 @@ export class StudentsService {
     ) {}
 
     async updateLessonLink(studentId: number, dto: UpdateLessonLinkDto) {
-        return await this.prisma.student.update({
+        const lesson = await this.prisma.lesson.findFirst({
             where: {
-                id: studentId,
+                studentId,
+                startDate: {
+                    gte: new Date(),
+                },
+            },
+            take: 1,
+        })
+
+        if (!lesson) {
+            throw new BadRequestException('Нет предстоящих занятий')
+        }
+
+        return await this.prisma.lesson.update({
+            where: {
+                id: lesson.id,
             },
             data: {
                 lessonLink: dto.link,

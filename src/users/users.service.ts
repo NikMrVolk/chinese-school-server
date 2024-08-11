@@ -449,7 +449,6 @@ export class UsersService {
                 student: {
                     select: {
                         id: true,
-                        lessonLink: true,
                         packageTitle: true,
                         languageLevel: true,
                         teacherId: true,

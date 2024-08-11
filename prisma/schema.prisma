@@ -163,7 +163,6 @@ model Student {
     updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
     packageTitle String? @map("package_title")
-    lessonLink   String? @map("lesson_link")
 
     purchasedTariffs PurchasedTariff[]
     lessons          Lesson[]
@@ -245,9 +244,9 @@ model Lesson {
 
     startDate DateTime @map("start_date")
 
-    lessonStatus  LessonStatus @map("lesson_status")
-    meetingId     String?      @map("meeting_id")
-    lessonLink    String?      @map("lesson_link")
+    lessonStatus LessonStatus @map("lesson_status")
+    meetingId    String?      @map("meeting_id")
+    lessonLink   String?      @map("lesson_link")
 
     teacherId         Int              @map("teacher_id")
     Teacher           Teacher          @relation(map: "teacher", fields: [teacherId], references: [id], onDelete: Cascade)

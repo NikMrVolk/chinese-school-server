@@ -80,9 +80,9 @@ export class LessonsService {
                     id: true,
                     startDate: true,
                     lessonStatus: true,
+                    lessonLink: true,
                     Student: {
                         select: {
-                            lessonLink: true,
                             languageLevel: true,
                             user: userSelect,
                         },
@@ -118,7 +118,7 @@ export class LessonsService {
         const response = lessons.map(chat => ({
             id: chat.id,
             startDate: chat.startDate,
-            link: chat.Student.lessonLink,
+            link: chat.lessonLink,
             lessonStatus: chat.lessonStatus,
             student: {
                 name: chat.Student.user.profile.name,
