@@ -86,4 +86,12 @@ export class TariffsController {
             tariffId: +tariffId,
         })
     }
+
+    @Auth()
+    @Admin()
+    @HttpCode(200)
+    @Post(':tariffId/:studentId/without-buy')
+    async createPurchasedTariffWithoutBuy(@Param('tariffId') tariffId: string, @Param('studentId') studentId: string) {
+        return this.tariffsService.createPurchasedTariffWithoutBuy(+tariffId, +studentId)
+    }
 }

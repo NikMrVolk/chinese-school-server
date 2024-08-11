@@ -213,7 +213,7 @@ model PurchasedTariff {
     completedHours Int       @map("completed_hours")
     tariffId       Int       @map("tariff_id")
 
-    paymentId     String        @unique @map("payment_id")
+    paymentId     String?        @unique @map("payment_id")
     paymentStatus PaymentStatus @map("payment_status")
 
     studentId Int      @map("student_id")

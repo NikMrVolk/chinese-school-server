@@ -159,4 +159,41 @@ export class TariffsService {
             },
         })
     }
+
+    async createPurchasedTariffWithoutBuy(tariffId: number, studentId: number) {
+        const tariff = await this.prisma.tariff.findUnique({
+            where: {
+                id: tariffId,
+            },
+        })
+
+        if (!tariff) {
+            throw new BadRequestException('Тариф не найден')
+        }
+
+        const expiredIn = new Date()
+        expiredIn.setDate(expiredIn.getDate() + tariff.quantityWeeksActive * 7)
+
+        return this.prisma.purchasedTariff.create({
+            data: {
+                title: tariff.title,
+                price: tariff.price,
+                benefits: tariff.benefits,
+                quantityHours: tariff.quantityHours,
+                quantityWeeksActive: tariff.quantityWeeksActive,
+                isRescheduleLessons: tariff.isRescheduleLessons,
+                isPopular: false,
+                paymentId: null,
+                paymentStatus: PaymentStatus.succeeded,
+                completedHours: 0,
+                expiredIn,
+                tariffId: tariff.id,
+                Student: {
+                    connect: {
+                        id: studentId,
+                    },
+                },
+            },
+        })
+    }
 }
