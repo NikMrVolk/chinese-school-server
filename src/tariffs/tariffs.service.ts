@@ -142,9 +142,8 @@ export class TariffsService {
             isPopular: true,
         }
     }
-    с
 
-    @Cron(CronExpression.EVERY_30_MINUTES)
+    @Cron(CronExpression.EVERY_3_HOURS)
     async deleteNotBoughtTariffs() {
         const hourAgo = new Date()
         hourAgo.setHours(hourAgo.getHours() - 1)

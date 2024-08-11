@@ -56,8 +56,7 @@ export class UsersService {
                 }
             }
         }
-
-        throw new BadRequestException('Пользователь не найден')
+        throw new ForbiddenException('Пользователь не найден')
     }
 
     async getUsers({
@@ -470,12 +469,11 @@ export class UsersService {
         })
 
         if (!user) {
-            throw new BadRequestException('Пользователь не найден')
+            throw new ForbiddenException('Пользователь не найден')
         }
 
         return user
     }
-
     async addStudentToTeacher(teacherId: number, studentId: number) {
         const teacher = await this.prisma.teacher.findUnique({
             where: {
