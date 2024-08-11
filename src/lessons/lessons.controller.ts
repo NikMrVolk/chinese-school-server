@@ -76,7 +76,7 @@ export class LessonsController {
             dto,
             currentUser,
             purchasedTariff,
-            meetingId: meeting.id,
+            ...(meeting && { meetingId: meeting.id }),
         })
 
         return lesson

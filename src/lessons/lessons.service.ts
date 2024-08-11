@@ -237,7 +237,7 @@ export class LessonsService {
 
     async createMeeting(dto: CreateLessonDto, teacherId: number, studentId: number, currentUser: User) {
         if (currentUser.role !== Role.ADMIN) {
-            return
+            return null
         }
 
         return this.zoomService.createMeeting(dto, teacherId, studentId)

@@ -539,6 +539,7 @@ export class UsersService {
             select: {
                 teacherId: true,
                 chat: true,
+                Note: true,
             },
         })
 
@@ -551,6 +552,11 @@ export class UsersService {
         }
 
         this.chatsService.deleteChatWithMessages(student.chat.id)
+        await this.prisma.note.delete({
+            where: {
+                id: student.Note.id,
+            },
+        })
 
         return await this.prisma.student.update({
             where: {
