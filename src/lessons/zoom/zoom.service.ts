@@ -178,7 +178,7 @@ export class ZoomService {
         const accessToken = await this.getToken()
 
         try {
-            const data = await this.httpService.axiosRef.request({
+            const data = await this.httpService.axiosRef.request<{ id: number; join_url: string }>({
                 method: 'PATCH',
                 url: this.ZOOM_BASE_API_URL + 'meetings/' + meetingId,
                 timeout: this.DEFAULT_TIMEOUT,

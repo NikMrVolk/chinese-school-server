@@ -148,24 +148,26 @@ export class LessonsService {
         currentUser,
         purchasedTariff,
         meetingId,
+        lessonLink,
     }: {
         teacherId: number
         studentId: number
         dto: CreateLessonDto
         currentUser: User
         purchasedTariff: PurchasedTariff
-        meetingId: number
+        meetingId?: number
+        lessonLink?: string
     }) {
         const lessonStatus = currentUser.role === Role.TEACHER ? LessonStatus.NOT_CONFIRMED : LessonStatus.START_SOON
-
-        console.log(meetingId)
-        console.log(typeof meetingId)
 
         return this.prisma.lesson.create({
             data: {
                 startDate: dto.startDate,
                 lessonStatus,
-                meetingId: String(meetingId),
+                ...(meetingId && {
+                    meetingId: String(meetingId),
+                    lessonLink,
+                }),
 
                 PurchasedTariff: {
                     connect: {
@@ -187,7 +189,35 @@ export class LessonsService {
     }
 
     async reschedule({ lessonId, dto, currentUser }: { lessonId: number; dto: CreateLessonDto; currentUser: User }) {
-        const lessonStatus = currentUser.role === Role.TEACHER ? LessonStatus.NOT_CONFIRMED : LessonStatus.START_SOON
+        const isTeacher = currentUser.role === Role.TEACHER
+        const isAdmin = currentUser.role === Role.ADMIN
+        const lessonStatus = isTeacher ? LessonStatus.NOT_CONFIRMED : LessonStatus.START_SOON
+
+        const lesson = await this.prisma.lesson.findUnique({
+            where: {
+                id: lessonId,
+            },
+        })
+        const meetingId = lesson.meetingId
+        if (isTeacher && meetingId) {
+            await this.zoomService.deleteMeeting(+meetingId)
+        }
+
+        if (isAdmin) {
+            const meeting = await this.zoomService.rescheduleMeeting(+meetingId, dto.startDate)
+
+            return this.prisma.lesson.update({
+                where: {
+                    id: lessonId,
+                },
+                data: {
+                    meetingId: String(meeting.id),
+                    lessonLink: meeting.join_url,
+                    startDate: dto.startDate,
+                    lessonStatus: LessonStatus.START_SOON,
+                },
+            })
+        }
 
         return this.prisma.lesson.update({
             where: {
@@ -195,14 +225,50 @@ export class LessonsService {
             },
             data: {
                 lessonStatus,
+                ...(isTeacher && {
+                    lessonLink: null,
+                    meetingId: null,
+                }),
                 startDate: dto.startDate,
             },
         })
     }
 
-    async confirm(lessonId: number) {
+    async confirm(lessonId: number, currentUser: User) {
+        const lesson = await this.prisma.lesson.findUnique({
+            where: {
+                id: lessonId,
+            },
+        })
+
+        if (!lesson) {
+            throw new BadRequestException('Урок не найден')
+        }
+
+        const meetingId = lesson.meetingId
+
+        if (!meetingId) {
+            const meeting = await this.createMeeting(
+                { startDate: lesson.startDate.toISOString() },
+                lesson.teacherId,
+                lesson.studentId,
+                currentUser
+            )
+
+            return this.prisma.lesson.update({
+                where: {
+                    id: lessonId,
+                },
+                data: {
+                    meetingId: String(meeting.id),
+                    lessonLink: meeting.join_url,
+                    lessonStatus: LessonStatus.START_SOON,
+                },
+            })
+        }
+
         try {
-            const lesson = await this.prisma.lesson.update({
+            return this.prisma.lesson.update({
                 where: {
                     id: lessonId,
                 },
@@ -210,14 +276,10 @@ export class LessonsService {
                     lessonStatus: LessonStatus.START_SOON,
                 },
             })
-
-            return lesson
         } catch (error) {
             console.error(error)
             throw new BadRequestException('Произошла ошибка при подтверждении урока')
         }
-
-        return
     }
 
     async delete(lessonId: number) {
@@ -227,6 +289,8 @@ export class LessonsService {
                     id: lessonId,
                 },
             })
+
+            await this.zoomService.deleteMeeting(+lesson.meetingId)
 
             return lesson
         } catch (error) {

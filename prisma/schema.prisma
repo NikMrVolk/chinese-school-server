@@ -247,7 +247,7 @@ model Lesson {
 
     lessonStatus  LessonStatus @map("lesson_status")
     meetingId     String?      @map("meeting_id")
-    isRescheduled Boolean      @default(false) @map("is_rescheduled")
+    lessonLink    String?      @map("lesson_link")
 
     teacherId         Int              @map("teacher_id")
     Teacher           Teacher          @relation(map: "teacher", fields: [teacherId], references: [id], onDelete: Cascade)

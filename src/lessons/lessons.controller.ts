@@ -76,7 +76,7 @@ export class LessonsController {
             dto,
             currentUser,
             purchasedTariff,
-            ...(meeting && { meetingId: meeting.id }),
+            ...(meeting && { meetingId: meeting.id, lessonLink: meeting.join_url }),
         })
 
         return lesson
@@ -109,8 +109,8 @@ export class LessonsController {
     @Admin()
     @HttpCode(200)
     @Patch(':lessonId')
-    async confirm(@Param('lessonId') lessonId: number) {
-        return this.lessonsService.confirm(+lessonId)
+    async confirm(@Param('lessonId') lessonId: number, @CurrentUser() currentUser: User) {
+        return this.lessonsService.confirm(+lessonId, currentUser)
     }
 
     @Auth()
