@@ -290,7 +290,10 @@ export class LessonsService {
                 },
             })
 
-            await this.zoomService.deleteMeeting(+lesson.meetingId)
+            const meetingId = lesson.meetingId
+            if (meetingId) {
+                await this.zoomService.deleteMeeting(+meetingId)
+            }
 
             return lesson
         } catch (error) {
