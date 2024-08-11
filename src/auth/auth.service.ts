@@ -181,8 +181,16 @@ export class AuthService {
 
     async createPasswordReset(email: string) {
         const user = await this.usersService.getFullUserInfo(null, email)
-
         if (!user) throw new NotFoundException('Пользователь не найден')
+
+        if (user.role === Role.STUDENT) {
+            const purchasedTariffs = user.student.purchasedTariffs
+            const firstSuccessPaymentTariff = purchasedTariffs.find(tariff => tariff.paymentStatus === 'succeeded')
+
+            if (!firstSuccessPaymentTariff) {
+                throw new BadRequestException('Вы не можете получить новый пароль')
+            }
+        }
 
         const passwordResetNote = user.passwordReset[0]
 

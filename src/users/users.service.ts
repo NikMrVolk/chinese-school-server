@@ -28,7 +28,13 @@ export class UsersService {
         }
 
         if (currentUser.id === searchedUserId) {
-            return this.getFullUserInfo(currentUser.id)
+            const user = await this.getFullUserInfo(currentUser.id)
+
+            if (!user) {
+                throw new ForbiddenException('Пользователь не найден')
+            }
+
+            return user
         }
 
         const searchedUser = await this.getFullUserInfo(searchedUserId)
@@ -43,6 +49,10 @@ export class UsersService {
 
         if (currentUser.role === Role.TEACHER && searchedUser.role === Role.STUDENT) {
             const teacher = await this.getFullUserInfo(currentUser.id)
+
+            if (!teacher) {
+                throw new ForbiddenException('Пользователь не найден')
+            }
 
             const allStudentsOfCurrentTeacher = await this.getAllStudentsOfOneTeacher(teacher.teacher.id)
 
@@ -227,6 +237,10 @@ export class UsersService {
 
     async deleteOne(id: number) {
         const user = await this.getFullUserInfo(id)
+
+        if (!user) {
+            throw new BadRequestException('Пользователь не найден')
+        }
 
         if (user.profile.avatar) {
             await this.filesService.deleteFile(user.profile.avatar)
@@ -418,7 +432,7 @@ export class UsersService {
     }
 
     async getFullUserInfo(id: number, email?: string) {
-        const user = await this.prisma.user.findUnique({
+        return this.prisma.user.findUnique({
             where: {
                 ...(id && { id }),
                 ...(email && { email }),
@@ -452,7 +466,6 @@ export class UsersService {
                                 id: true,
                             },
                         },
-                        // purchasedTariffs: true,
                     },
                 },
                 teacher: {
@@ -467,12 +480,6 @@ export class UsersService {
                 },
             },
         })
-
-        if (!user) {
-            throw new ForbiddenException('Пользователь не найден')
-        }
-
-        return user
     }
     async addStudentToTeacher(teacherId: number, studentId: number) {
         const teacher = await this.prisma.teacher.findUnique({

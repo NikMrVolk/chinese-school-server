@@ -1,4 +1,5 @@
 import {
+    BadRequestException,
     Body,
     Controller,
     Delete,
@@ -58,6 +59,10 @@ export class UsersController {
     @Get('current')
     async getUsers(@CurrentUser('id') id: number) {
         const user = await this.usersService.getFullUserInfo(id)
+
+        if (!user) {
+            throw new BadRequestException('Пользователь не найден')
+        }
 
         const { password, session, otps, passwordReset, ...userToResponse } = user
 
