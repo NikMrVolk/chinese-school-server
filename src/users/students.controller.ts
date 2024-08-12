@@ -18,6 +18,7 @@ import { StudentsService } from './students.service'
 import { UpdateNotesDto } from './dto/updateNotes.dto'
 import { UpdateLanguageLevelDto } from './dto/updateLanguageLevel.dto'
 import { FilesInterceptor } from '@nestjs/platform-express'
+import { UpdatePackageDto } from './dto/updatePackage.dto'
 
 @Auth()
 @Controller('students')
@@ -55,6 +56,15 @@ export class StudentsController {
     @Patch(':studentId/levels')
     async updateLanguageLevel(@Body() dto: UpdateLanguageLevelDto, @Param('studentId') studentId: string) {
         const { languageLevel } = await this.studentsService.updateLanguageLevel(+studentId, dto)
+
+        return languageLevel
+    }
+
+    @Admin()
+    @HttpCode(200)
+    @Patch(':studentId/package')
+    async updatePackage(@Body() dto: UpdatePackageDto, @Param('studentId') studentId: string) {
+        const { languageLevel } = await this.studentsService.updatePackage(+studentId, dto)
 
         return languageLevel
     }

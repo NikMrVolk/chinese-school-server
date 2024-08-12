@@ -3,6 +3,7 @@ import { PrismaService } from 'src/prisma.service'
 import { TariffDto } from './dto/tariff.dto'
 import { Cron, CronExpression } from '@nestjs/schedule'
 import { PaymentStatus } from '@prisma/client'
+import { UpdatePurchasedTariffDto } from './dto/updatePurchasedTariff.dto'
 
 @Injectable()
 export class TariffsService {
@@ -193,6 +194,66 @@ export class TariffsService {
                         id: studentId,
                     },
                 },
+            },
+        })
+    }
+
+    async updatePurchasedTariff({
+        purchasedTariffId,
+        dto,
+    }: {
+        purchasedTariffId: number
+        dto: UpdatePurchasedTariffDto
+    }) {
+        const purchasedTariff = await this.prisma.purchasedTariff.findUnique({
+            where: {
+                id: purchasedTariffId,
+            },
+        })
+
+        if (!purchasedTariff) {
+            throw new BadRequestException('Купленный тариф не найден')
+        }
+
+        if (purchasedTariff.paymentStatus !== PaymentStatus.succeeded) {
+            throw new BadRequestException('Тариф, который вы пытаетесь изменить не оплачен')
+        }
+
+        const expiredDate = new Date(dto.expiredIn)
+        expiredDate.setHours(0, 0, 0, 0)
+
+        if (isNaN(expiredDate.getTime())) {
+            throw new BadRequestException('Неверный формат введённой даты')
+        }
+
+        const currentDate = new Date()
+        currentDate.setTime(currentDate.getTime() + purchasedTariff.quantityWeeksActive * 7 * 24 * 60 * 60 * 1000)
+        if (expiredDate.getTime() > currentDate.getTime()) {
+            throw new BadRequestException('Вы не можете поставить дату больше, чем позволяет время тарифа')
+        }
+
+        const completedHours = dto.completedHours
+
+        if (completedHours < 0) {
+            throw new BadRequestException('Количество оставшихся часов не может быть отрицательным')
+        }
+
+        if (completedHours > purchasedTariff.quantityHours) {
+            throw new BadRequestException(
+                'Количество оставшихся часов не может быть больше, чем количество часов в тарифе'
+            )
+        }
+        const completedHoursToUpdate = purchasedTariff.quantityHours - completedHours
+
+        return this.prisma.purchasedTariff.update({
+            where: {
+                id: purchasedTariffId,
+            },
+            data: {
+                expiredIn: expiredDate.toISOString(),
+                ...(!!completedHoursToUpdate && {
+                    completedHours: completedHoursToUpdate,
+                }),
             },
         })
     }

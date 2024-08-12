@@ -20,6 +20,7 @@ import { Admin, Auth, CurrentUser } from 'src/utils/decorators'
 import { CreateTariffDto, UpdateTariffDto } from './dto/tariff.dto'
 import { Response } from 'express'
 import { TransactionService } from 'src/transaction/transaction.service'
+import { UpdatePurchasedTariffDto } from './dto/updatePurchasedTariff.dto'
 
 @Auth()
 @Controller('tariffs')
@@ -93,5 +94,19 @@ export class TariffsController {
     @Post(':tariffId/:studentId/without-buy')
     async createPurchasedTariffWithoutBuy(@Param('tariffId') tariffId: string, @Param('studentId') studentId: string) {
         return this.tariffsService.createPurchasedTariffWithoutBuy(+tariffId, +studentId)
+    }
+
+    @Auth()
+    @Admin()
+    @HttpCode(200)
+    @Patch(':purchasedTariffId/update')
+    async updatePurchasedTariff(
+        @Param('purchasedTariffId') purchasedTariffId: string,
+        @Body() dto: UpdatePurchasedTariffDto
+    ) {
+        return this.tariffsService.updatePurchasedTariff({
+            purchasedTariffId: +purchasedTariffId,
+            dto,
+        })
     }
 }

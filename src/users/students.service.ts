@@ -5,6 +5,7 @@ import { UpdateLessonLinkDto } from './dto/updateLessonLink.dto'
 import { UpdateNotesDto } from './dto/updateNotes.dto'
 import { UpdateLanguageLevelDto } from './dto/updateLanguageLevel.dto'
 import { FilesService } from 'src/files/files.service'
+import { UpdatePackageDto } from './dto/updatePackage.dto'
 
 @Injectable()
 export class StudentsService {
@@ -136,6 +137,17 @@ export class StudentsService {
             where: {
                 id: homeworkId,
                 studentId,
+            },
+        })
+    }
+
+    async updatePackage(studentId: number, dto: UpdatePackageDto) {
+        return this.prisma.student.update({
+            where: {
+                id: studentId,
+            },
+            data: {
+                packageTitle: dto.packageTitle,
             },
         })
     }
