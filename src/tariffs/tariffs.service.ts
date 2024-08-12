@@ -173,7 +173,7 @@ export class TariffsService {
         }
 
         const expiredIn = new Date()
-        expiredIn.setDate(expiredIn.getDate() + tariff.quantityWeeksActive * 7)
+        expiredIn.setTime(expiredIn.getTime() + tariff.quantityWeeksActive * 7 * 24 * 60 * 60 * 1000)
 
         return this.prisma.purchasedTariff.create({
             data: {

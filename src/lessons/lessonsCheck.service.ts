@@ -84,7 +84,7 @@ export class LessonsCheckService {
         }
 
         const twoWeeksAhead = new Date()
-        twoWeeksAhead.setDate(twoWeeksAhead.getDate() + 14)
+        twoWeeksAhead.setTime(twoWeeksAhead.getTime() + 14 * 24 * 60 * 60 * 1000)
         if (dateFromDto.getTime() > twoWeeksAhead.getTime()) {
             throw new BadRequestException('Вы не можете запланировать занятие позже чем на 2 недели вперёд')
         }
