@@ -659,6 +659,30 @@ export class UsersService {
         })
     }
 
+    async deleteProfileAvatar(userId: number, currentUser: User) {
+        const changeUser = await this.getFullUserInfo(userId)
+
+        if (!changeUser) {
+            throw new BadRequestException('Пользователь не найден')
+        }
+
+        const currentUserAvatar = changeUser.profile.avatar
+        if (changeUser.id === currentUser.id || currentUser.role === Role.ADMIN) {
+            await this.filesService.deleteFile(currentUserAvatar)
+
+            return this.prisma.profile.update({
+                where: {
+                    id: changeUser.profile.id,
+                },
+                data: {
+                    avatar: null,
+                },
+            })
+        }
+
+        throw new BadRequestException('Не удалось изменить данные')
+    }
+
     async updateTeacherInfo({
         changeUserId,
         dto,

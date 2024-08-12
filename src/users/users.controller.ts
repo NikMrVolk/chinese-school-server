@@ -137,6 +137,14 @@ export class UsersController {
 
     @Auth()
     @HttpCode(200)
+    @Delete('profile/:id/avatar')
+    @UseInterceptors(FileInterceptor('avatar'))
+    async deleteUserAvatar(@Param('id') id: string, @CurrentUser() currentUser: User) {
+        return this.usersService.deleteProfileAvatar(+id, currentUser)
+    }
+
+    @Auth()
+    @HttpCode(200)
     @Patch('teacher/:id')
     @UseInterceptors(FileInterceptor('youtubeVideoPreviewUrl'))
     async changeProfile(
