@@ -12,13 +12,9 @@ export class ZoomService {
     ZOOM_BASE_API_URL = 'https://api.zoom.us/v2/'
     ZOOM_BASE_AUTH_URL = 'https://zoom.us/oauth/token'
     DEFAULT_TIMEOUT = 120000
-
     DEFAULT_MEET_TYPE = 2
     DEFAULT_MEET_DURATION = 60
     DEFAULT_MEET_TIMEZONE = 'Europe/Moscow'
-
-    // TIME_CONFIRM = 50 * 60
-    TIME_CONFIRM = 100
 
     constructor(
         private readonly httpService: HttpService,
@@ -145,7 +141,7 @@ export class ZoomService {
                 timeout: this.DEFAULT_TIMEOUT,
                 data: JSON.stringify({
                     topic: `Занятие ${teacherProfile.name} ${teacherProfile.surname} и ${studentProfile.name} ${studentProfile.surname}`,
-                    start_time: dto.startDate,
+                    start_time: dto.startDate.replace('.000Z', 'Z'),
                     type: this.DEFAULT_MEET_TYPE,
                     duration: this.DEFAULT_MEET_DURATION,
                     timezone: this.DEFAULT_MEET_TIMEZONE,
@@ -177,7 +173,7 @@ export class ZoomService {
                 url: this.ZOOM_BASE_API_URL + 'meetings/' + meetingId,
                 timeout: this.DEFAULT_TIMEOUT,
                 data: {
-                    start_time,
+                    start_time: start_time.replace('.000Z', 'Z'),
                 },
                 headers: {
                     'Content-Type': 'application/json',
@@ -219,17 +215,9 @@ export class ZoomService {
 
             const meetingDetails = await this.getMeetingDetails(meetingId)
 
-            console.log(meetingDetails)
-
             const participants = meetingDetails.participants
 
-            const stack = []
-
-            for (const participant of participants) {
-                if (participant.duration > this.TIME_CONFIRM) {
-                    stack.push(participant)
-                }
-            }
+            const summedDurations = participants.reduce((acc, participant) => acc + participant.duration, 0)
 
             const lesson = await this.prisma.lesson.findFirst({
                 where: {
@@ -237,48 +225,53 @@ export class ZoomService {
                 },
             })
 
-            await this.prisma.lesson.update({
-                where: {
-                    id: lesson.id,
-                },
-                data: {
-                    lessonStatus: stack.length >= 2 ? LessonStatus.ALL_SUCCESS : LessonStatus.UN_SUCCESS,
-                },
-            })
-
-            const purchasedTariff = await this.prisma.purchasedTariff.update({
-                where: {
-                    id: lesson.purchasedTariffId,
-                },
-                data: {
-                    completedHours: {
-                        increment: 1,
-                    },
-                },
-            })
-
-            if (purchasedTariff.completedHours >= purchasedTariff.quantityHours) {
-                const allUsersTariffs = await this.prisma.purchasedTariff.findMany({
+            if (lesson) {
+                await this.prisma.lesson.update({
                     where: {
-                        studentId: lesson.studentId,
+                        id: lesson.id,
+                    },
+                    data: {
+                        lessonStatus:
+                            summedDurations >= 2 * +process.env.LESSON_TIME_SECONDS_CONFIRM ?? 3000
+                                ? LessonStatus.ALL_SUCCESS
+                                : LessonStatus.UN_SUCCESS,
                     },
                 })
 
-                const tariffWithHours = allUsersTariffs.find(tariff => tariff.completedHours < tariff.quantityHours)
-
-                if (tariffWithHours) {
-                    const currentDate = new Date()
-                    const daysToAdd = 7 * tariffWithHours.quantityWeeksActive
-                    const expiredIn = new Date(currentDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000)
-
-                    await this.prisma.purchasedTariff.update({
-                        where: {
-                            id: tariffWithHours.id,
+                const purchasedTariff = await this.prisma.purchasedTariff.update({
+                    where: {
+                        id: lesson.purchasedTariffId,
+                    },
+                    data: {
+                        completedHours: {
+                            increment: 1,
                         },
-                        data: {
-                            expiredIn,
+                    },
+                })
+
+                if (purchasedTariff.completedHours >= purchasedTariff.quantityHours) {
+                    const allUsersTariffs = await this.prisma.purchasedTariff.findMany({
+                        where: {
+                            studentId: lesson.studentId,
                         },
                     })
+
+                    const tariffWithHours = allUsersTariffs.find(tariff => tariff.completedHours < tariff.quantityHours)
+
+                    if (tariffWithHours) {
+                        const currentDate = new Date()
+                        const daysToAdd = 7 * tariffWithHours.quantityWeeksActive
+                        const expiredIn = new Date(currentDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000)
+
+                        await this.prisma.purchasedTariff.update({
+                            where: {
+                                id: tariffWithHours.id,
+                            },
+                            data: {
+                                expiredIn,
+                            },
+                        })
+                    }
                 }
             }
         }
