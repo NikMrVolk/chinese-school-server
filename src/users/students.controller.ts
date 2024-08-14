@@ -8,6 +8,7 @@ import {
     Param,
     ParseFilePipe,
     Patch,
+    Post,
     UploadedFiles,
     UseInterceptors,
 } from '@nestjs/common'
@@ -19,12 +20,13 @@ import { UpdateNotesDto } from './dto/updateNotes.dto'
 import { UpdateLanguageLevelDto } from './dto/updateLanguageLevel.dto'
 import { FilesInterceptor } from '@nestjs/platform-express'
 import { UpdatePackageDto } from './dto/updatePackage.dto'
+import { FreeLessonInviteDto } from './dto/freeLessonInvite.dto'
 
-@Auth()
 @Controller('students')
 export class StudentsController {
     constructor(private studentsService: StudentsService) {}
 
+    @Auth()
     @Patch(':studentId/links')
     @HttpCode(200)
     async updateLessonLink(
@@ -38,6 +40,7 @@ export class StudentsController {
         return lessonLink
     }
 
+    @Auth()
     @HttpCode(200)
     @Patch(':studentId/notes')
     async updateNotes(
@@ -51,6 +54,7 @@ export class StudentsController {
         return text
     }
 
+    @Auth()
     @Admin()
     @HttpCode(200)
     @Patch(':studentId/levels')
@@ -60,6 +64,7 @@ export class StudentsController {
         return languageLevel
     }
 
+    @Auth()
     @Admin()
     @HttpCode(200)
     @Patch(':studentId/package')
@@ -69,6 +74,7 @@ export class StudentsController {
         return languageLevel
     }
 
+    @Auth()
     @HttpCode(200)
     @UseInterceptors(FilesInterceptor('files'))
     @Patch(':studentId/homeworks')
@@ -91,6 +97,7 @@ export class StudentsController {
         return this.studentsService.updateHomeWork(+studentId, files)
     }
 
+    @Auth()
     @HttpCode(200)
     @Delete(':studentId/homeworks/:homeworkId')
     async deleteHomework(
@@ -100,5 +107,12 @@ export class StudentsController {
     ) {
         await this.studentsService.isCurrentTeacherHaveThisStudent(currentUser, +studentId)
         return this.studentsService.deleteHomeWork(+studentId, +homeworkId)
+    }
+
+    @HttpCode(200)
+    @Post('free-lesson-invite')
+    async freeLessonInvite(@Body() dto: FreeLessonInviteDto) {
+        console.log(dto)
+        return this.studentsService.freeLessonInvite(dto)
     }
 }

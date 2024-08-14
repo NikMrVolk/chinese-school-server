@@ -81,6 +81,23 @@ export class MailsService {
         })
     }
 
+    async sendFreeLessonInvite({ email, name, phone }) {
+        await this.template({
+            to: process.env.FREE_LESSON_INVITE_EMAIL || 'ufi10840@gmail.com',
+            subject: 'Приглашение на бесплатный урок',
+            template: 'freeLessonInvite',
+            context: {
+                email,
+                name,
+                phone,
+                path: path.join(__dirname, 'templates'),
+                loginLink: `${process.env.CLIENT_URL}/auth`,
+                logoLink: process.env.CLIENT_LANDING_URL,
+                logoImageSrc: `${process.env.CLIENT_URL}/images/logo/blackLogo.${email.includes('@gmail.com') ? 'png' : 'svg'}`,
+            },
+        })
+    }
+
     private async template(options: ISendMailOptions) {
         try {
             await this.mailerService.sendMail(options)

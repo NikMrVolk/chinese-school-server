@@ -6,6 +6,8 @@ import { UpdateNotesDto } from './dto/updateNotes.dto'
 import { UpdateLanguageLevelDto } from './dto/updateLanguageLevel.dto'
 import { FilesService } from 'src/files/files.service'
 import { UpdatePackageDto } from './dto/updatePackage.dto'
+import { FreeLessonInviteDto } from './dto/freeLessonInvite.dto'
+import { MailsService } from 'src/mails/mails.service'
 
 @Injectable()
 export class StudentsService {
@@ -13,7 +15,8 @@ export class StudentsService {
 
     constructor(
         private prisma: PrismaService,
-        private filesService: FilesService
+        private filesService: FilesService,
+        private mailsService: MailsService
     ) {}
 
     async updateLessonLink(studentId: number, dto: UpdateLessonLinkDto) {
@@ -149,6 +152,14 @@ export class StudentsService {
             data: {
                 packageTitle: dto.packageTitle,
             },
+        })
+    }
+
+    async freeLessonInvite(dto: FreeLessonInviteDto) {
+        await this.mailsService.sendFreeLessonInvite({
+            name: dto.name,
+            email: dto.email || 'Не указана',
+            phone: dto.phone,
         })
     }
 }

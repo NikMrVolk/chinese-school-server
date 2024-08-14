@@ -12,9 +12,11 @@ async function bootstrap() {
     app.enableCors({
         origin: [
             'http://localhost:3000',
+            'http://localhost:5173',
             'https://nickmozav.online',
             'nickmozav.online',
             process.env.CLIENT_HOST,
+            process.env.CLIENT_LANDING_HOST,
             'http://89.111.174.240',
         ],
         credentials: true,
