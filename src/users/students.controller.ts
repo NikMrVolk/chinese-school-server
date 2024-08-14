@@ -112,7 +112,6 @@ export class StudentsController {
     @HttpCode(200)
     @Post('free-lesson-invite')
     async freeLessonInvite(@Body() dto: FreeLessonInviteDto) {
-        console.log(dto)
         return this.studentsService.freeLessonInvite(dto)
     }
 }
