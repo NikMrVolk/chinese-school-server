@@ -17,7 +17,6 @@ async function bootstrap() {
             'nickmozav.online',
             process.env.CLIENT_HOST,
             process.env.CLIENT_LANDING_HOST,
-            'https://www.prostochinese.com/',
         ],
         credentials: true,
         exposedHeaders: 'set-cookie',
