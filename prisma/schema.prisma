@@ -209,7 +209,7 @@ model PurchasedTariff {
     isRescheduleLessons Boolean  @map("is_rescedule_lessons")
     isPopular           Boolean  @default(false) @map("is_popular")
 
-    expiredIn      DateTime? @map("started_at")
+    expiredIn      DateTime? @map("expired_in")
     completedHours Int       @map("completed_hours")
     tariffId       Int       @map("tariff_id")
 
