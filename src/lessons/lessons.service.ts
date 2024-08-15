@@ -313,11 +313,11 @@ export class LessonsService {
     @Cron(CronExpression.EVERY_HOUR)
     async changeLessonStatusToProcess() {
         const currentDate = new Date()
-        currentDate.setHours(0, 0, 0, 0)
+        currentDate.setHours(currentDate.getHours(), 0, 0, 0)
 
         const purchasedTariffs = await this.prisma.lesson.findMany({
             where: {
-                startDate: currentDate,
+                startDate: currentDate.toISOString(),
             },
             select: {
                 PurchasedTariff: {
