@@ -6,6 +6,7 @@ import { LessonStatus } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
 import { EndedLessonWebhook } from '../webhook.types'
 import { CreateLessonDto } from '../dto/lesson.dto'
+import { MailsService } from 'src/mails/mails.service'
 
 @Injectable()
 export class ZoomService {
@@ -18,7 +19,8 @@ export class ZoomService {
 
     constructor(
         private readonly httpService: HttpService,
-        private readonly prisma: PrismaService
+        private readonly prisma: PrismaService,
+        private readonly mailsService: MailsService
     ) {}
 
     async getToken() {
@@ -248,6 +250,31 @@ export class ZoomService {
                         },
                     },
                 })
+
+                if (purchasedTariff.completedHours === purchasedTariff.quantityHours - 4) {
+                    const {
+                        user: { id, email },
+                    } = await this.prisma.student.findUnique({
+                        where: {
+                            id: purchasedTariff.studentId,
+                        },
+                        select: {
+                            user: {
+                                select: {
+                                    id: true,
+                                    email: true,
+                                },
+                            },
+                        },
+                    })
+
+                    if (id && email) {
+                        this.mailsService.sendStudentNotificationWithFewLessons(
+                            email,
+                            `${process.env.CLIENT_URL}/tariffs/${id}`
+                        )
+                    }
+                }
 
                 if (purchasedTariff.completedHours >= purchasedTariff.quantityHours) {
                     const allUsersTariffs = await this.prisma.purchasedTariff.findMany({

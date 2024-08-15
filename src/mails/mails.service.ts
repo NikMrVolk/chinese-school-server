@@ -98,6 +98,22 @@ export class MailsService {
         })
     }
 
+    async sendStudentNotificationWithFewLessons(email: string, buyLink: string) {
+        await this.template({
+            to: email,
+            subject: 'Напоминание',
+            template: 'notificationWithFewLessons',
+            context: {
+                email,
+                buyLink,
+                path: path.join(__dirname, 'templates'),
+                loginLink: `${process.env.CLIENT_URL}/auth`,
+                logoLink: process.env.CLIENT_LANDING_URL,
+                logoImageSrc: `${process.env.CLIENT_URL}/images/logo/blackLogo.${email.includes('@gmail.com') ? 'png' : 'svg'}`,
+            },
+        })
+    }
+
     private async template(options: ISendMailOptions) {
         try {
             await this.mailerService.sendMail(options)
