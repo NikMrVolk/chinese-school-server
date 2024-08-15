@@ -6,7 +6,6 @@ import { LessonStatus } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
 import { EndedLessonWebhook } from '../webhook.types'
 import { CreateLessonDto } from '../dto/lesson.dto'
-import { MailsService } from 'src/mails/mails.service'
 
 @Injectable()
 export class ZoomService {
@@ -19,8 +18,7 @@ export class ZoomService {
 
     constructor(
         private readonly httpService: HttpService,
-        private readonly prisma: PrismaService,
-        private readonly mailsService: MailsService
+        private readonly prisma: PrismaService
     ) {}
 
     async getToken() {
@@ -239,67 +237,6 @@ export class ZoomService {
                                 : LessonStatus.UN_SUCCESS,
                     },
                 })
-
-                const purchasedTariff = await this.prisma.purchasedTariff.update({
-                    where: {
-                        id: lesson.purchasedTariffId,
-                    },
-                    data: {
-                        completedHours: {
-                            increment: 1,
-                        },
-                    },
-                })
-
-                if (purchasedTariff.completedHours === purchasedTariff.quantityHours - 4) {
-                    const {
-                        user: { id, email },
-                    } = await this.prisma.student.findUnique({
-                        where: {
-                            id: purchasedTariff.studentId,
-                        },
-                        select: {
-                            user: {
-                                select: {
-                                    id: true,
-                                    email: true,
-                                },
-                            },
-                        },
-                    })
-
-                    if (id && email) {
-                        this.mailsService.sendStudentNotificationWithFewLessons(
-                            email,
-                            `${process.env.CLIENT_URL}/tariffs/${id}`
-                        )
-                    }
-                }
-
-                if (purchasedTariff.completedHours >= purchasedTariff.quantityHours) {
-                    const allUsersTariffs = await this.prisma.purchasedTariff.findMany({
-                        where: {
-                            studentId: lesson.studentId,
-                        },
-                    })
-
-                    const tariffWithHours = allUsersTariffs.find(tariff => tariff.completedHours < tariff.quantityHours)
-
-                    if (tariffWithHours) {
-                        const currentDate = new Date()
-                        const daysToAdd = 7 * tariffWithHours.quantityWeeksActive
-                        const expiredIn = new Date(currentDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000)
-
-                        await this.prisma.purchasedTariff.update({
-                            where: {
-                                id: tariffWithHours.id,
-                            },
-                            data: {
-                                expiredIn,
-                            },
-                        })
-                    }
-                }
             }
         }
     }

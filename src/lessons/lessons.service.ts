@@ -3,13 +3,15 @@ import { LessonStatus, PurchasedTariff, Role, User } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
 import { CreateLessonDto } from './dto/lesson.dto'
 import { ZoomService } from './zoom/zoom.service'
-import { Cron } from '@nestjs/schedule'
+import { Cron, CronExpression } from '@nestjs/schedule'
+import { MailsService } from 'src/mails/mails.service'
 
 @Injectable()
 export class LessonsService {
     constructor(
         private readonly prisma: PrismaService,
-        private readonly zoomService: ZoomService
+        private readonly zoomService: ZoomService,
+        private readonly mailsService: MailsService
     ) {}
 
     async getLessons({
@@ -308,21 +310,83 @@ export class LessonsService {
         return this.zoomService.createMeeting(dto, teacherId, studentId)
     }
 
-    @Cron('0 10 * * * *')
-    private async changeLessonStatusToUnSuccess() {
-        const oneHourAgo = new Date()
-        oneHourAgo.setHours(oneHourAgo.getHours() - 1)
+    @Cron(CronExpression.EVERY_HOUR)
+    async changeLessonStatusToProcess() {
+        const currentDate = new Date()
+        currentDate.setHours(0, 0, 0, 0)
 
-        await this.prisma.lesson.updateMany({
+        const purchasedTariffs = await this.prisma.lesson.findMany({
             where: {
-                createdAt: {
-                    lt: oneHourAgo,
-                },
-                lessonStatus: 'START_SOON',
+                startDate: currentDate,
             },
-            data: {
-                lessonStatus: 'UN_SUCCESS',
+            select: {
+                PurchasedTariff: {
+                    select: {
+                        id: true,
+                    },
+                },
             },
         })
+
+        const ids = purchasedTariffs.map(purchasedTariff => purchasedTariff.PurchasedTariff.id)
+
+        await Promise.all(
+            ids.map(async id => {
+                const purchasedTariff = await this.prisma.purchasedTariff.update({
+                    where: { id },
+                    data: { completedHours: { increment: 1 } },
+                })
+
+                if (purchasedTariff.completedHours === purchasedTariff.quantityHours - 4) {
+                    const {
+                        user: { id, email },
+                    } = await this.prisma.student.findUnique({
+                        where: {
+                            id: purchasedTariff.studentId,
+                        },
+                        select: {
+                            user: {
+                                select: {
+                                    id: true,
+                                    email: true,
+                                },
+                            },
+                        },
+                    })
+
+                    if (id && email) {
+                        this.mailsService.sendStudentNotificationWithFewLessons(
+                            email,
+                            `${process.env.CLIENT_URL}/tariffs/${id}`
+                        )
+                    }
+                }
+
+                if (purchasedTariff.completedHours >= purchasedTariff.quantityHours) {
+                    const allUsersTariffs = await this.prisma.purchasedTariff.findMany({
+                        where: {
+                            studentId: purchasedTariff.studentId,
+                        },
+                    })
+
+                    const tariffWithHours = allUsersTariffs.find(tariff => tariff.completedHours < tariff.quantityHours)
+
+                    if (tariffWithHours) {
+                        const currentDate = new Date()
+                        const daysToAdd = 7 * tariffWithHours.quantityWeeksActive
+                        const expiredIn = new Date(currentDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000)
+
+                        await this.prisma.purchasedTariff.update({
+                            where: {
+                                id: tariffWithHours.id,
+                            },
+                            data: {
+                                expiredIn,
+                            },
+                        })
+                    }
+                }
+            })
+        )
     }
 }
