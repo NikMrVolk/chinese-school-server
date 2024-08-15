@@ -3,6 +3,7 @@ import { LessonStatus, PurchasedTariff, Role, User } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
 import { CreateLessonDto } from './dto/lesson.dto'
 import { ZoomService } from './zoom/zoom.service'
+import { Cron } from '@nestjs/schedule'
 
 @Injectable()
 export class LessonsService {
@@ -305,5 +306,23 @@ export class LessonsService {
         }
 
         return this.zoomService.createMeeting(dto, teacherId, studentId)
+    }
+
+    @Cron('0 10 * * * *')
+    private async changeLessonStatusToUnSuccess() {
+        const oneHourAgo = new Date()
+        oneHourAgo.setHours(oneHourAgo.getHours() - 1)
+
+        await this.prisma.lesson.updateMany({
+            where: {
+                createdAt: {
+                    lt: oneHourAgo,
+                },
+                lessonStatus: 'START_SOON',
+            },
+            data: {
+                lessonStatus: 'UN_SUCCESS',
+            },
+        })
     }
 }
