@@ -87,8 +87,8 @@ export class LessonsController {
     @Patch(':teacherId/:studentId/reschedule/:lessonId')
     async reschedule(
         @CurrentUser() currentUser: User,
-        @Param('lessonId') lessonId: number,
         @Body() dto: CreateLessonDto,
+        @Param('lessonId') lessonId: number,
         @Param('teacherId') teacherId: string,
         @Param('studentId') studentId: string
     ) {

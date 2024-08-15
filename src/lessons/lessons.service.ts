@@ -204,17 +204,14 @@ export class LessonsService {
         }
 
         if (isAdmin) {
-            const meeting = await this.zoomService.rescheduleMeeting(+meetingId, dto.startDate)
+            await this.zoomService.rescheduleMeeting(+meetingId, dto.startDate)
 
             return this.prisma.lesson.update({
                 where: {
                     id: lessonId,
                 },
                 data: {
-                    meetingId: String(meeting.id),
-                    lessonLink: meeting.join_url,
                     startDate: dto.startDate,
-                    lessonStatus: LessonStatus.START_SOON,
                 },
             })
         }
