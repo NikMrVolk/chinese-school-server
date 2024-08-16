@@ -21,6 +21,8 @@ async function bootstrap() {
             'https://www.prostochinese.com',
             'https://prostochinese.com/',
             'https://www.prostochinese.com/',
+            'prostochinese.com',
+            'www.prostochinese.com',
         ],
         credentials: true,
         exposedHeaders: 'set-cookie',
