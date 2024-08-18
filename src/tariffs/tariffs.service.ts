@@ -251,7 +251,7 @@ export class TariffsService {
             },
             data: {
                 expiredIn: expiredDate.toISOString(),
-                ...(!!completedHoursToUpdate && {
+                ...(completedHoursToUpdate >= 0 && {
                     completedHours: completedHoursToUpdate,
                 }),
             },
